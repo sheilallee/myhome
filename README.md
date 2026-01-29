@@ -1,0 +1,443 @@
+# MyHome - Plataforma de Classificados Imobiliários
+
+## 📋 Informações do Projeto
+
+| Item | Descrição |
+|------|-----------|
+| **Disciplina** | Padrões de Projeto de Software |
+| **Professor** | Alex Sandro da Cunha Rêgo |
+| **Período** | 2025.2 |
+
+---
+
+## 👥 Equipe 
+
+- Jackson Ramos 
+- Sheila Lee 
+- Thiago Alexandre 
+
+---
+
+## 📖 Descrição da Solução
+
+O **MyHome** é uma plataforma digital de classificados imobiliários que conecta proprietários, corretores, imobiliárias e potenciais compradores/locatários. O sistema permite que anunciantes publiquem anúncios detalhados de imóveis para venda ou aluguel, enquanto usuários comuns podem pesquisar, filtrar e visualizar esses anúncios.
+
+### 🎯 Objetivos Principais
+
+- ✅ Suportar diferentes tipos de imóveis (casas, apartamentos, terrenos, imóveis comerciais)
+- ✅ Gerenciar múltiplos tipos de anúncios (venda, aluguel, temporada)
+- ✅ Controlar diversos perfis de usuários com permissões distintas
+- ✅ Permitir expansão flexível para novos tipos de imóveis e serviços
+- ✅ Gerenciar diferentes formatos de pagamento e planos de assinatura
+- ✅ Prover mecanismos de notificação através de múltiplos canais
+- ✅ Processar buscas com múltiplos filtros combinados
+
+### 🏗️ Arquitetura do Sistema
+
+O sistema será desenvolvido seguindo os princípios de **Clean Architecture** e **SOLID**, utilizando padrões de projeto (Design Patterns) para garantir:
+
+- **Extensibilidade**: Fácil adição de novos recursos sem modificar código existente
+- **Manutenibilidade**: Código organizado, testável e fácil de entender
+- **Reutilização**: Componentes desacoplados que podem ser reutilizados
+- **Flexibilidade**: Adaptação a mudanças de requisitos com baixo impacto
+
+---
+
+## 🎨 Padrões de Projeto Utilizados
+
+O MyHome implementa **padrões de projeto** estrategicamente distribuídos para atender aos requisitos funcionais:
+
+### 📊 Visão Geral dos Padrões
+
+| Requisito | Padrões | Propósito |
+|-----------|---------|-----------|
+| **RF01** | Builder + Factory Method | Criação controlada de Anúncios e Imóveis personalizados |
+| **RF02** | Prototype | Criação de Imóveis a partir de padrões predefinidos |
+| **RF03** | Chain of Responsibility | Validação em cadeia de regras de moderação |
+| **RF04** | State + Observer | Gerenciamento do ciclo de vida e notificações |
+| **RF05** | Strategy | Múltiplos canais de notificação intercambiáveis |
+| **RF06** | Decorator | Filtros dinâmicos para busca avançada |
+| **RF07** | Singleton + Facade | Configuração centralizada e simplificação de acesso |
+| **RF08** | Template Method | Geração de relatórios em diversos formatos |
+
+---
+
+## 🔍 Especificação Detalhada dos Requisitos
+
+### RF01 - Criação de Anúncios
+
+**🎯 Padrões:** Builder + Factory Method
+
+**📝 Descrição:**
+O sistema permite o cadastro de diferentes tipos de imóveis (Casa, Apartamento, Terreno, Sala Comercial, Galpão, etc.) de forma guiada, garantindo que informações obrigatórias sejam coletadas corretamente.
+
+**🛠️ Implementação:**
+
+- **Builder Pattern**: Constrói objetos `Anuncio` passo a passo, garantindo que todas as informações obrigatórias (título, tipo de imóvel, preço) sejam fornecidas antes da criação.
+  
+- **Factory Method Pattern**: Cria diferentes tipos de imóveis (`Casa`, `Apartamento`, `Terreno`, etc.) através de factories concretas, permitindo adicionar novos tipos sem modificar código existente.
+
+**📂 Classes Principais:**
+- `AnuncioBuilder` - Interface Builder para construção de anúncios
+- `AnuncioBuilderImpl` - Implementação concreta do Builder
+- `ImovelFactory` - Factory abstrata para criação de imóveis
+- `CasaFactory`, `ApartamentoFactory`, `TerrenoFactory` - Factories concretas
+
+**🔗 Localização:**
+```
+src/
+├── builder/
+│   ├── AnuncioBuilder.java
+│   └── AnuncioBuilderImpl.java
+└── factory/
+    ├── ImovelFactory.java
+    ├── CasaFactory.java
+    ├── ApartamentoFactory.java
+    └── TerrenoFactory.java
+```
+
+---
+
+### RF02 - Instâncias de Anúncios Padrão
+
+**🎯 Padrão:** Prototype
+
+**📝 Descrição:**
+Certos tipos de anúncios iniciam com configuração padrão (ex: Apartamento com 2 quartos, 60m²). O sistema permite clonar esses protótipos para criar novos anúncios rapidamente.
+
+**🛠️ Implementação:**
+
+- **Prototype Pattern**: Permite clonar imóveis predefinidos, copiando todas as características padrão e permitindo customizações posteriores.
+
+**📂 Classes Principais:**
+- `ImovelPrototype` - Interface Prototype com método `clone()`
+- `ApartamentoPadrao`, `CasaPadrao` - Protótipos concretos predefinidos
+- `PrototypeRegistry` - Registro de protótipos disponíveis
+
+**🔗 Localização:**
+```
+src/prototype/
+├── ImovelPrototype.java
+├── ApartamentoPadrao.java
+├── CasaPadrao.java
+└── PrototypeRegistry.java
+```
+
+---
+
+### RF03 - Publicação e Moderação
+
+**🎯 Padrão:** Chain of Responsibility
+
+**📝 Descrição:**
+Anúncios submetidos passam por moderação antes de se tornarem públicos. As validações incluem verificação de termos proibidos, preço condizente e presença de fotos/descrição.
+
+**🛠️ Implementação:**
+
+- **Chain of Responsibility**: Cria uma cadeia de validadores independentes que processam o anúncio sequencialmente. Cada validador pode aprovar, reprovar ou passar para o próximo.
+
+**📂 Classes Principais:**
+- `ModeracaoHandler` - Handler abstrato da cadeia
+- `TermosProibidosHandler` - Valida termos inadequados
+- `PrecoValidoHandler` - Valida se o preço é condizente
+- `FotoDescricaoHandler` - Valida presença de foto/descrição
+
+**🔗 Localização:**
+```
+src/chain/
+├── ModeracaoHandler.java
+├── TermosProibidosHandler.java
+├── PrecoValidoHandler.java
+└── FotoDescricaoHandler.java
+```
+
+---
+
+### RF04 - Ciclo de Vida do Anúncio
+
+**🎯 Padrões:** State + Observer
+
+**📝 Descrição:**
+Cada anúncio possui um ciclo de vida (Rascunho → Moderação → Ativo → Vendido/Suspenso). Mudanças de estado disparam notificações automáticas e logs.
+
+**🛠️ Implementação:**
+
+- **State Pattern**: Encapsula o comportamento de cada estado do anúncio, permitindo transições controladas.
+  
+- **Observer Pattern**: Notifica automaticamente anunciantes e sistema de log quando o estado do anúncio muda.
+
+**📂 Classes Principais:**
+- `AnuncioState` - Interface State
+- `RascunhoState`, `ModeracaoState`, `AtivoState`, `VendidoState`, `SuspensoState` - Estados concretos
+- `AnuncioContext` - Contexto que mantém o estado atual
+- `AnuncioObserver` - Interface Observer
+- `AnuncianteObserver`, `LogObserver` - Observers concretos
+
+**🔗 Localização:**
+```
+src/
+├── state/
+│   ├── AnuncioState.java
+│   ├── RascunhoState.java
+│   ├── ModeracaoState.java
+│   ├── AtivoState.java
+│   ├── VendidoState.java
+│   └── SuspensoState.java
+└── observer/
+    ├── AnuncioObserver.java
+    ├── AnuncianteObserver.java
+    └── LogObserver.java
+```
+
+---
+
+### RF05 - Notificação de Usuários
+
+**🎯 Padrão:** Strategy
+
+**📝 Descrição:**
+O sistema notifica usuários sobre eventos através de diferentes canais (Email, SMS, Telegram, WhatsApp) conforme preferência do usuário.
+
+**🛠️ Implementação:**
+
+- **Strategy Pattern**: Encapsula diferentes algoritmos de notificação, permitindo trocar o canal dinamicamente em tempo de execução.
+
+**📂 Classes Principais:**
+- `NotificacaoStrategy` - Interface Strategy
+- `EmailNotificacao`, `SMSNotificacao`, `TelegramNotificacao`, `WhatsAppNotificacao` - Estratégias concretas
+- `NotificadorContext` - Contexto que utiliza a estratégia
+
+**🔗 Localização:**
+```
+src/strategy/
+├── NotificacaoStrategy.java
+├── EmailNotificacao.java
+├── SMSNotificacao.java
+├── TelegramNotificacao.java
+└── WhatsAppNotificacao.java
+```
+
+---
+
+### RF06 - Busca Avançada
+
+**🎯 Padrão:** Decorator
+
+**📝 Descrição:**
+Usuários buscam imóveis aplicando múltiplos filtros combinados (preço, localização, área, quartos). Filtros podem ser adicionados dinamicamente.
+
+**🛠️ Implementação:**
+
+- **Decorator Pattern**: Adiciona responsabilidades (filtros) dinamicamente a objetos de busca, permitindo combinações flexíveis sem criar subclasses.
+
+**📂 Classes Principais:**
+- `BuscaImovel` - Componente base
+- `FiltroDecorator` - Decorator abstrato
+- `FiltroPreco`, `FiltroLocalizacao`, `FiltroArea`, `FiltroQuartos` - Decorators concretos
+
+**🔗 Localização:**
+```
+src/decorator/
+├── BuscaImovel.java
+├── FiltroDecorator.java
+├── FiltroPreco.java
+├── FiltroLocalizacao.java
+├── FiltroArea.java
+└── FiltroQuartos.java
+```
+
+---
+
+### RF07 - Configuração Centralizada
+
+**🎯 Padrões:** Singleton + Facade
+
+**📝 Descrição:**
+O sistema carrega configurações (taxas, limites, termos proibidos, URLs) de arquivo `.properties` através de um ponto de acesso global único.
+
+**🛠️ Implementação:**
+
+- **Singleton Pattern**: Garante uma única instância de `ConfigManager` acessível globalmente.
+  
+- **Facade Pattern**: Simplifica o acesso a subsistemas complexos de configuração através de uma interface unificada.
+
+**📂 Classes Principais:**
+- `ConfigManager` - Singleton para gerenciar configurações
+- `ConfigFacade` - Facade para simplificar acesso às configurações
+- `application.properties` - Arquivo de configuração
+
+**🔗 Localização:**
+```
+src/
+├── singleton/
+│   └── ConfigManager.java
+├── facade/
+│   └── ConfigFacade.java
+└── resources/
+    └── application.properties
+```
+
+---
+
+### RF08 - Geração de Relatórios
+
+**🎯 Padrão:** Template Method
+
+**📝 Descrição:**
+O sistema gera relatórios e documentos em diversos formatos (PDF, Excel, HTML) mantendo uma estrutura comum.
+
+**🛠️ Implementação:**
+
+- **Template Method Pattern**: Define o esqueleto do algoritmo de geração de relatórios, permitindo que subclasses implementem etapas específicas sem alterar a estrutura.
+
+**📂 Classes Principais:**
+- `RelatorioTemplate` - Classe abstrata com template method
+- `RelatorioPDF`, `RelatorioExcel`, `RelatorioHTML` - Implementações concretas
+
+**🔗 Localização:**
+```
+src/template/
+├── RelatorioTemplate.java
+├── RelatorioPDF.java
+├── RelatorioExcel.java
+└── RelatorioHTML.java
+```
+
+---
+
+## 🚀 Como Executar o Projeto
+
+### 📋 Pré-requisitos
+
+- Java JDK 11 ou superior
+- Maven 3.6+ ou Gradle
+- IDE (IntelliJ IDEA, Eclipse, VS Code)
+
+### 🔧 Instalação e Execução
+
+#### Opção 1: Usando Maven
+
+```bash
+# 1. Clone o repositório
+git clone https://github.com/sheilallee/myhome.git
+cd myhome
+
+# 2. Compile o projeto
+mvn clean compile
+
+# 3. Execute os testes
+mvn test
+
+# 4. Execute a aplicação
+mvn exec:java -Dexec.mainClass="com.myhome.Main"
+```
+
+#### Opção 2: Usando Gradle
+
+```bash
+# 1. Clone o repositório
+git clone https://github.com/sheilallee/myhome.git
+cd myhome
+
+# 2. Compile o projeto
+./gradlew build
+
+# 3. Execute a aplicação
+./gradlew run
+```
+
+#### Opção 3: Usando IDE
+
+1. Importe o projeto como Maven/Gradle project
+2. Localize a classe `Main.java` em `src/main/java/com/myhome/`
+3. Execute com `Run` ou `Debug`
+
+### 📊 Povoamento de Dados
+
+O sistema popula dados automaticamente a partir de arquivos CSV localizados em `src/main/resources/data/`:
+
+- `imoveis.csv` - Dados de imóveis
+- `usuarios.csv` - Dados de usuários
+- `anuncios.csv` - Dados de anúncios
+
+**Exemplo de execução:**
+```bash
+# Os dados são carregados automaticamente na inicialização
+java -jar myhome.jar --load-data
+```
+
+---
+
+## 📁 Estrutura do Projeto
+
+```
+myhome/
+├── src/
+│   ├── main/
+│   │   ├── java/
+│   │   │   └── com/
+│   │   │       └── myhome/
+│   │   │           ├── builder/          # RF01: Builder Pattern
+│   │   │           ├── factory/          # RF01: Factory Method
+│   │   │           ├── prototype/        # RF02: Prototype
+│   │   │           ├── chain/            # RF03: Chain of Responsibility
+│   │   │           ├── state/            # RF04: State
+│   │   │           ├── observer/         # RF04: Observer
+│   │   │           ├── strategy/         # RF05: Strategy
+│   │   │           ├── decorator/        # RF06: Decorator
+│   │   │           ├── singleton/        # RF07: Singleton
+│   │   │           ├── facade/           # RF07: Facade
+│   │   │           ├── template/         # RF08: Template Method
+│   │   │           ├── model/            # Entidades de domínio
+│   │   │           ├── service/          # Serviços de negócio
+│   │   │           ├── util/             # Utilitários
+│   │   │           └── Main.java         # Classe principal
+│   │   └── resources/
+│   │       ├── application.properties    # Configurações
+│   │       └── data/                     # Arquivos CSV
+│   │           ├── imoveis.csv
+│   │           ├── usuarios.csv
+│   │           └── anuncios.csv
+│   └── test/
+│       └── java/
+│           └── com/
+│               └── myhome/              # Testes unitários
+├── docs/
+│   ├── diagrams/                        # Diagramas UML
+│   │   ├── class-diagram.puml
+│   │   └── architecture-diagram.puml
+│   └── especificacao.pdf                # Documento de especificação
+├── pom.xml                              # Configuração Maven
+├── build.gradle                         # Configuração Gradle
+└── README.md                            # Este arquivo
+```
+
+---
+
+## 🧪 Testes
+
+O projeto inclui testes unitários para todos os padrões implementados:
+
+```bash
+# Executar todos os testes
+mvn test
+
+# Executar testes com cobertura
+mvn test jacoco:report
+
+# Ver relatório de cobertura
+open target/site/jacoco/index.html
+```
+
+---
+
+## 📚 Referências
+
+- [Refactoring Guru - Design Patterns](https://refactoring.guru/pt-br/design-patterns/catalog)
+
+---
+
+## 📄 Licença
+
+Este projeto foi desenvolvido para fins acadêmicos na disciplina de Padrões de Projeto de Software.
+
