@@ -51,49 +51,49 @@ O MyHome implementa **padrões de projeto** estrategicamente distribuídos para 
 
 | Requisito | Padrões | Propósito |
 |-----------|---------|-----------|
-| **RF01** | Builder + Factory Method | Criação controlada de Anúncios e Imóveis personalizados |
+| **RF01** | Factory Method + Builder | Criação controlada de Anúncios e Imóveis personalizados |
 | **RF02** | Prototype | Criação de Imóveis a partir de padrões predefinidos |
 | **RF03** | Chain of Responsibility | Validação em cadeia de regras de moderação |
 | **RF04** | State + Observer | Gerenciamento do ciclo de vida e notificações |
 | **RF05** | Strategy | Múltiplos canais de notificação intercambiáveis |
 | **RF06** | Decorator | Filtros dinâmicos para busca avançada |
-| **RF07** | Singleton + Facade | Configuração centralizada e simplificação de acesso |
-| **RF08** | Template Method | Geração de relatórios em diversos formatos |
+| **RF07** | Singleton | Configuração centralizada global |
+| **RF08** | Facade | Simplificação de acesso aos subsistemas |
 
 ---
 
 ## 🔍 Especificação Detalhada dos Requisitos
 
-### RF01 - Criação de Anúncios
+### RF01 - Criação de Anúncios e Imóveis
 
-**🎯 Padrões:** Builder + Factory Method
+**🎯 Padrões:** Factory Method + Builder
 
 **📝 Descrição:**
-O sistema permite o cadastro de diferentes tipos de imóveis (Casa, Apartamento, Terreno, Sala Comercial, Galpão, etc.) de forma guiada, garantindo que informações obrigatórias sejam coletadas corretamente.
+O sistema permite o cadastro de diferentes tipos de anúncios (Venda, Aluguel, Temporada) e imóveis complexos (Casa, Apartamento, Terreno, Sala Comercial) de forma controlada, garantindo que informações obrigatórias sejam coletadas corretamente.
 
 **🛠️ Implementação:**
 
-- **Builder Pattern**: Constrói objetos `Anuncio` passo a passo, garantindo que todas as informações obrigatórias (título, tipo de imóvel, preço) sejam fornecidas antes da criação.
-  
-- **Factory Method Pattern**: Cria diferentes tipos de imóveis (`Casa`, `Apartamento`, `Terreno`, etc.) através de factories concretas, permitindo adicionar novos tipos sem modificar código existente.
+- **Factory Method Pattern**: Cria diferentes tipos de anúncios (`Venda`, `Aluguel`, `Temporada`) através de factories concretas, permitindo adicionar novos tipos sem modificar código existente. Cada factory encapsula a lógica de criação específica do tipo de anúncio.
+
+- **Builder Pattern**: Constrói objetos `Imovel` complexos passo a passo, garantindo que todas as informações obrigatórias (tipo, área, endereço, características específicas) sejam fornecidas antes da criação. O Builder permite configurar atributos opcionais de forma fluente.
 
 **📂 Classes Principais:**
-- `AnuncioBuilder` - Interface Builder para construção de anúncios
-- `AnuncioBuilderImpl` - Implementação concreta do Builder
-- `ImovelFactory` - Factory abstrata para criação de imóveis
-- `CasaFactory`, `ApartamentoFactory`, `TerrenoFactory` - Factories concretas
+- `AnuncioFactory` - Factory abstrata para criação de anúncios
+- `VendaFactory`, `AluguelFactory`, `TemporadaFactory` - Factories concretas
+- `ImovelBuilder` - Interface Builder para construção de imóveis
+- `ImovelBuilderImpl` - Implementação concreta do Builder
 
 **🔗 Localização:**
 ```
 src/
-├── builder/
-│   ├── AnuncioBuilder.java
-│   └── AnuncioBuilderImpl.java
-└── factory/
-    ├── ImovelFactory.java
-    ├── CasaFactory.java
-    ├── ApartamentoFactory.java
-    └── TerrenoFactory.java
+├── factory/
+│   ├── AnuncioFactory.java
+│   ├── VendaFactory.java
+│   ├── AluguelFactory.java
+│   └── TemporadaFactory.java
+└── builder/
+    ├── ImovelBuilder.java
+    └── ImovelBuilderImpl.java
 ```
 
 ---
@@ -250,57 +250,49 @@ src/decorator/
 
 ### RF07 - Configuração Centralizada
 
-**🎯 Padrões:** Singleton + Facade
+**🎯 Padrão:** Singleton
 
 **📝 Descrição:**
-O sistema carrega configurações (taxas, limites, termos proibidos, URLs) de arquivo `.properties` através de um ponto de acesso global único.
+O sistema carrega configurações globais (taxas, limites, termos proibidos, URLs de serviços) de arquivo `.properties` através de um ponto de acesso único e centralizado, garantindo consistência em toda a aplicação.
 
 **🛠️ Implementação:**
 
-- **Singleton Pattern**: Garante uma única instância de `ConfigManager` acessível globalmente.
-  
-- **Facade Pattern**: Simplifica o acesso a subsistemas complexos de configuração através de uma interface unificada.
+- **Singleton Pattern**: Garante uma única instância de `ConfigurationManager` acessível globalmente através do método estático `getInstance()`. O construtor privado previne múltiplas instâncias, e a inicialização eager garante thread-safety.
 
 **📂 Classes Principais:**
-- `ConfigManager` - Singleton para gerenciar configurações
-- `ConfigFacade` - Facade para simplificar acesso às configurações
+- `ConfigurationManager` - Singleton para gerenciar configurações
 - `application.properties` - Arquivo de configuração
 
 **🔗 Localização:**
 ```
 src/
 ├── singleton/
-│   └── ConfigManager.java
-├── facade/
-│   └── ConfigFacade.java
+│   └── ConfigurationManager.java
 └── resources/
     └── application.properties
 ```
 
 ---
 
-### RF08 - Geração de Relatórios
+### RF08 - Simplificação de Acesso aos Subsistemas
 
-**🎯 Padrão:** Template Method
+**🎯 Padrão:** Facade
 
 **📝 Descrição:**
-O sistema gera relatórios e documentos em diversos formatos (PDF, Excel, HTML) mantendo uma estrutura comum.
+O sistema fornece uma interface unificada e simplificada para operações complexas que envolvem múltiplos subsistemas (criação de imóveis, publicação de anúncios, moderação, busca e notificações).
 
 **🛠️ Implementação:**
 
-- **Template Method Pattern**: Define o esqueleto do algoritmo de geração de relatórios, permitindo que subclasses implementem etapas específicas sem alterar a estrutura.
+- **Facade Pattern**: A classe `MyHomeFacade` encapsula a complexidade de coordenar múltiplos subsistemas (Factory para anúncios, Builder para imóveis, Chain of Responsibility para moderação, Decorator para buscas, Strategy para notificações). Clientes interagem apenas com a Facade, que delega chamadas aos subsistemas apropriados.
 
 **📂 Classes Principais:**
-- `RelatorioTemplate` - Classe abstrata com template method
-- `RelatorioPDF`, `RelatorioExcel`, `RelatorioHTML` - Implementações concretas
+- `MyHomeFacade` - Facade principal do sistema
+- Integra: `AnuncioFactory`, `ImovelBuilder`, `ModerationHandler`, `SearchEngine`, `NotificationManager`
 
 **🔗 Localização:**
 ```
-src/template/
-├── RelatorioTemplate.java
-├── RelatorioPDF.java
-├── RelatorioExcel.java
-└── RelatorioHTML.java
+src/facade/
+└── MyHomeFacade.java
 ```
 
 ---
@@ -377,8 +369,8 @@ myhome/
 │   │   ├── java/
 │   │   │   └── com/
 │   │   │       └── myhome/
-│   │   │           ├── builder/          # RF01: Builder Pattern
 │   │   │           ├── factory/          # RF01: Factory Method
+│   │   │           ├── builder/          # RF01: Builder Pattern
 │   │   │           ├── prototype/        # RF02: Prototype
 │   │   │           ├── chain/            # RF03: Chain of Responsibility
 │   │   │           ├── state/            # RF04: State
@@ -386,8 +378,7 @@ myhome/
 │   │   │           ├── strategy/         # RF05: Strategy
 │   │   │           ├── decorator/        # RF06: Decorator
 │   │   │           ├── singleton/        # RF07: Singleton
-│   │   │           ├── facade/           # RF07: Facade
-│   │   │           ├── template/         # RF08: Template Method
+│   │   │           ├── facade/           # RF08: Facade
 │   │   │           ├── model/            # Entidades de domínio
 │   │   │           ├── service/          # Serviços de negócio
 │   │   │           ├── util/             # Utilitários

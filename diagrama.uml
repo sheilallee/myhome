@@ -1,0 +1,468 @@
+@startuml MyHome - Diagrama de Classes
+
+' ========================================
+' LEGENDA DE PADRÕES
+' ========================================
+note as Patterns
+  **Padrões de Projeto Aplicados:**
+  
+  RF01: **Factory Method** + **Builder**
+  RF02: **Prototype**
+  RF03: **Chain of Responsibility**
+  RF04: **State** + **Observer**
+  RF05: **Strategy**
+  RF06: **Decorator**
+  RF07: **Singleton**
+  RF08: **Facade**
+end note
+
+' ========================================
+' RF08 - FACADE PATTERN
+' ========================================
+package "Facade (RF08)" <<Frame>> #LightBlue {
+    class MyHomeFacade {
+        - anuncioFactory: AnuncioFactory
+        - imovelBuilder: ImovelBuilder
+        - moderationChain: ModerationHandler
+        - searchEngine: SearchEngine
+        - notificationManager: NotificationManager
+        - configManager: ConfigurationManager
+        + criarImovel(tipo, caracteristicas): Imovel
+        + criarAnuncio(tipo, imovel, dados): Anuncio
+        + publicarAnuncio(anuncio): boolean
+        + buscarImoveis(filtros): List<Anuncio>
+        + notificarUsuario(usuario, mensagem): void
+    }
+    
+    note right of MyHomeFacade
+      Facade (RF08)
+      Simplifica acesso aos
+      subsistemas de criação,
+      moderação, busca e
+      notificação
+    end note
+}
+
+' ========================================
+' RF01 - FACTORY METHOD + BUILDER
+' ========================================
+package "Criação de Anúncios e Imóveis (RF01)" <<Frame>> #LightGreen {
+    
+    ' Factory Method - Anúncios
+    interface AnuncioFactory <<interface>> {
+        + {abstract} criarAnuncio(imovel, dados): Anuncio
+    }
+    
+    class VendaFactory {
+        + criarAnuncio(imovel, dados): Anuncio
+    }
+    
+    class AluguelFactory {
+        + criarAnuncio(imovel, dados): Anuncio
+    }
+    
+    class TemporadaFactory {
+        + criarAnuncio(imovel, dados): Anuncio
+    }
+    
+    AnuncioFactory <|.. VendaFactory
+    AnuncioFactory <|.. AluguelFactory
+    AnuncioFactory <|.. TemporadaFactory
+    
+    note right of AnuncioFactory
+      Factory Method (RF01)
+      Cria diferentes tipos
+      de anúncios
+    end note
+    
+    ' Builder Pattern - Imóveis
+    interface ImovelBuilder <<interface>> {
+        + {abstract} setTipo(tipo): ImovelBuilder
+        + {abstract} setArea(area): ImovelBuilder
+        + {abstract} setEndereco(endereco): ImovelBuilder
+        + {abstract} setQuartos(quartos): ImovelBuilder
+        + {abstract} setAndar(andar): ImovelBuilder
+        + {abstract} setCaracteristicas(map): ImovelBuilder
+        + {abstract} build(): Imovel
+    }
+    
+    class ImovelBuilderImpl {
+        - tipo: String
+        - area: double
+        - endereco: String
+        - caracteristicas: Map<String, Object>
+        + setTipo(tipo): ImovelBuilder
+        + setArea(area): ImovelBuilder
+        + setEndereco(endereco): ImovelBuilder
+        + setQuartos(quartos): ImovelBuilder
+        + setAndar(andar): ImovelBuilder
+        + setCaracteristicas(map): ImovelBuilder
+        + build(): Imovel
+        - validar(): void
+    }
+    
+    ImovelBuilder <|.. ImovelBuilderImpl
+    
+    note right of ImovelBuilder
+      Builder (RF01)
+      Constrói imóveis
+      complexos passo a passo
+    end note
+    
+    abstract class Imovel {
+        # tipo: String
+        # area: double
+        # endereco: String
+        + {abstract} clone(): Imovel
+        + getTipo(): String
+        + validar(): boolean
+    }
+    
+    class Apartamento {
+        - andar: int
+        - temElevador: boolean
+        - quartos: int
+        + clone(): Imovel
+    }
+    
+    class Casa {
+        - temQuintal: boolean
+        - quartos: int
+        - garagem: int
+        + clone(): Imovel
+    }
+    
+    class Terreno {
+        - areaTerreno: double
+        - zoneamento: String
+        + clone(): Imovel
+    }
+    
+    class SalaComercial {
+        - andar: int
+        - vagasEstacionamento: int
+        + clone(): Imovel
+    }
+    
+    Imovel <|-- Apartamento
+    Imovel <|-- Casa
+    Imovel <|-- Terreno
+    Imovel <|-- SalaComercial
+}
+
+' ========================================
+' RF02 - PROTOTYPE
+' ========================================
+package "Protótipos (RF02)" <<Frame>> #LightYellow {
+    class PrototypeRegistry {
+        - {static} instance: PrototypeRegistry
+        - prototipos: Map<String, Imovel>
+        - PrototypeRegistry()
+        + {static} getInstance(): PrototypeRegistry
+        + registrarPrototipo(chave, imovel): void
+        + getPrototipo(chave): Imovel
+    }
+    
+    note right of PrototypeRegistry
+      Singleton + Prototype
+      Armazena configurações
+      padrão de imóveis
+    end note
+}
+
+' ========================================
+' ANUNCIO
+' ========================================
+package "Domínio" <<Frame>> #White {
+    class Anuncio {
+        - id: String
+        - titulo: String
+        - tipoAnuncio: String
+        - preco: double
+        - descricao: String
+        - imovel: Imovel
+        - estado: EstadoAnuncio
+        - anunciante: Usuario
+        - observers: List<AnuncioObserver>
+        + mudarEstado(novoEstado): void
+        + addObserver(observer): void
+        + removeObserver(observer): void
+        + notifyObservers(): void
+    }
+    
+    class Usuario {
+        - id: String
+        - nome: String
+        - email: String
+        - telefone: String
+        - canalNotificacao: NotificationStrategy
+        + setCanalNotificacao(canal): void
+    }
+    
+    Anuncio "1" *-- "1" Imovel
+    Anuncio "1" -- "1" Usuario
+}
+
+' ========================================
+' RF04 - STATE PATTERN
+' ========================================
+package "Estado do Anúncio (RF04)" <<Frame>> #LightCoral {
+    interface EstadoAnuncio <<interface>> {
+        + {abstract} enviarParaModeracao(anuncio): void
+        + {abstract} aprovar(anuncio): void
+        + {abstract} reprovar(anuncio): void
+        + {abstract} vender(anuncio): void
+        + {abstract} suspender(anuncio): void
+        + {abstract} getNome(): String
+    }
+    
+    class Rascunho {
+        + enviarParaModeracao(anuncio): void
+        + getNome(): String
+    }
+    
+    class EmModeracao {
+        + aprovar(anuncio): void
+        + reprovar(anuncio): void
+        + getNome(): String
+    }
+    
+    class Ativo {
+        + vender(anuncio): void
+        + suspender(anuncio): void
+        + getNome(): String
+    }
+    
+    class Vendido {
+        + getNome(): String
+    }
+    
+    class Suspenso {
+        + enviarParaModeracao(anuncio): void
+        + getNome(): String
+    }
+    
+    EstadoAnuncio <|.. Rascunho
+    EstadoAnuncio <|.. EmModeracao
+    EstadoAnuncio <|.. Ativo
+    EstadoAnuncio <|.. Vendido
+    EstadoAnuncio <|.. Suspenso
+    
+    Anuncio "1" o-- "1" EstadoAnuncio
+}
+
+' ========================================
+' RF04/RF05 - OBSERVER PATTERN
+' ========================================
+package "Observadores (RF04/RF05)" <<Frame>> #Lavender {
+    interface AnuncioObserver <<interface>> {
+        + {abstract} onEstadoAlterado(anuncio, estadoAntigo, estadoNovo): void
+    }
+    
+    class LogObserver {
+        + onEstadoAlterado(anuncio, estadoAntigo, estadoNovo): void
+    }
+    
+    class NotificationObserver {
+        + onEstadoAlterado(anuncio, estadoAntigo, estadoNovo): void
+    }
+    
+    AnuncioObserver <|.. LogObserver
+    AnuncioObserver <|.. NotificationObserver
+    
+    Anuncio "1" o-- "*" AnuncioObserver
+}
+
+' ========================================
+' RF05 - STRATEGY PATTERN (Notificações)
+' ========================================
+package "Notificações (RF05)" <<Frame>> #LightPink {
+    interface NotificationStrategy <<interface>> {
+        + {abstract} enviar(destinatario, mensagem): void
+    }
+    
+    class EmailNotification {
+        + enviar(destinatario, mensagem): void
+    }
+    
+    class SMSNotification {
+        + enviar(destinatario, mensagem): void
+    }
+    
+    class WhatsAppNotification {
+        + enviar(destinatario, mensagem): void
+    }
+    
+    class TelegramNotification {
+        + enviar(destinatario, mensagem): void
+    }
+    
+    NotificationStrategy <|.. EmailNotification
+    NotificationStrategy <|.. SMSNotification
+    NotificationStrategy <|.. WhatsAppNotification
+    NotificationStrategy <|.. TelegramNotification
+    
+    class NotificationManager {
+        + enviarNotificacao(usuario, mensagem): void
+    }
+    
+    Usuario "1" o-- "1" NotificationStrategy
+}
+
+' ========================================
+' RF03 - CHAIN OF RESPONSIBILITY
+' ========================================
+package "Moderação (RF03)" <<Frame>> #LightGoldenRodYellow {
+    abstract class ModerationHandler {
+        # nextHandler: ModerationHandler
+        + setNext(handler): ModerationHandler
+        + handle(anuncio): boolean
+        # {abstract} doHandle(anuncio): boolean
+    }
+    
+    class TermsValidator {
+        - termosProibidos: List<String>
+        # doHandle(anuncio): boolean
+    }
+    
+    class PriceValidator {
+        - precoMinimo: double
+        # doHandle(anuncio): boolean
+    }
+    
+    class PhotoValidator {
+        - minimoFotos: int
+        # doHandle(anuncio): boolean
+    }
+    
+    class DescriptionValidator {
+        - tamanhoMinimo: int
+        # doHandle(anuncio): boolean
+    }
+    
+    ModerationHandler <|-- TermsValidator
+    ModerationHandler <|-- PriceValidator
+    ModerationHandler <|-- PhotoValidator
+    ModerationHandler <|-- DescriptionValidator
+}
+
+' ========================================
+' RF06 - DECORATOR PATTERN
+' ========================================
+package "Busca e Filtros (RF06)" <<Frame>> #LightCyan {
+    interface BuscaFiltro <<interface>> {
+        + {abstract} buscar(): List<Anuncio>
+    }
+    
+    class BuscaPadrao {
+        - anuncios: List<Anuncio>
+        + buscar(): List<Anuncio>
+    }
+    
+    abstract class FiltroDecorator {
+        # buscaFiltro: BuscaFiltro
+        # FiltroDecorator(busca)
+        + {abstract} buscar(): List<Anuncio>
+    }
+    
+    class PrecoDecorator {
+        - precoMin: double
+        - precoMax: double
+        + PrecoDecorator(busca, min, max)
+        + buscar(): List<Anuncio>
+    }
+    
+    class LocalizacaoDecorator {
+        - cidade: String
+        + LocalizacaoDecorator(busca, cidade)
+        + buscar(): List<Anuncio>
+    }
+    
+    class AreaDecorator {
+        - areaMinima: double
+        + AreaDecorator(busca, area)
+        + buscar(): List<Anuncio>
+    }
+    
+    class TipoImovelDecorator {
+        - tipo: String
+        + TipoImovelDecorator(busca, tipo)
+        + buscar(): List<Anuncio>
+    }
+    
+    class EstadoAtivoDecorator {
+        + EstadoAtivoDecorator(busca)
+        + buscar(): List<Anuncio>
+    }
+    
+    BuscaFiltro <|.. BuscaPadrao
+    BuscaFiltro <|.. FiltroDecorator
+    FiltroDecorator <|-- PrecoDecorator
+    FiltroDecorator <|-- LocalizacaoDecorator
+    FiltroDecorator <|-- AreaDecorator
+    FiltroDecorator <|-- TipoImovelDecorator
+    FiltroDecorator <|-- EstadoAtivoDecorator
+    
+    FiltroDecorator "1" o-- "1" BuscaFiltro
+    
+    class SearchEngine {
+        - anuncios: List<Anuncio>
+        + buscar(buscaFiltro): List<Anuncio>
+        + addAnuncio(anuncio): void
+    }
+    
+    SearchEngine ..> BuscaFiltro : usa
+    
+    note right of FiltroDecorator
+      Padrão Decorator
+      Permite adicionar filtros
+      dinamicamente em tempo
+      de execução, sem modificar
+      classes existentes
+    end note
+}
+
+' ========================================
+' RF07 - SINGLETON
+' ========================================
+package "Configuração (RF07)" <<Frame>> #Wheat {
+    class ConfigurationManager {
+        - {static} instance: ConfigurationManager
+        - properties: Properties
+        - ConfigurationManager()
+        + {static} getInstance(): ConfigurationManager
+        + getProperty(key): String
+        + getPropertyAsDouble(key): double
+        + getPropertyAsInt(key): int
+        + getTermosProibidos(): List<String>
+    }
+    
+    note right of ConfigurationManager
+      Singleton (RF07)
+      Carrega configurações
+      do arquivo .properties
+      Acesso global único
+    end note
+}
+
+' ========================================
+' RELACIONAMENTOS FACADE
+' ========================================
+MyHomeFacade ..> AnuncioFactory : usa
+MyHomeFacade ..> ImovelBuilder : usa
+MyHomeFacade ..> ModerationHandler : usa
+MyHomeFacade ..> SearchEngine : usa
+MyHomeFacade ..> NotificationManager : usa
+MyHomeFacade ..> ConfigurationManager : usa
+
+' ========================================
+' RELACIONAMENTOS GERAIS
+' ========================================
+ImovelBuilder ..> Imovel : constrói
+AnuncioFactory ..> Anuncio : cria
+AnuncioFactory ..> Imovel : recebe
+PrototypeRegistry ..> Imovel : clona
+NotificationObserver ..> NotificationManager : usa
+NotificationManager ..> NotificationStrategy : usa
+
+@enduml
