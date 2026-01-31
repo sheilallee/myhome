@@ -3,107 +3,28 @@ package com.myhome.singleton;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 
-/**
- * RF07 - SINGLETON PATTERN
- * 
- * Implementação do padrão Singleton para gerenciar configurações da aplicação.
- * 
- * RESPONSABILIDADES:
- * - Garantir uma única instância global de gerenciamento de configurações
- * - Carregar propriedades do arquivo application.properties
- * - Fornecer acesso thread-safe às configurações
- * 
- * ESTRUTURA DO SINGLETON:
- * 1. Construtor privado - impede criação externa de instâncias
- * 2. Instância estática privada - armazena a única instância
- * 3. Método getInstance() estático - ponto de acesso global
- * 
- * THREAD-SAFETY:
- * Utiliza inicialização eager (na carga da classe) para garantir
- * thread-safety sem necessidade de sincronização explícita.
- */
+// RF07 - Singleton: instância única para gerenciar configurações globais
 public class ConfigurationManager {
     
-    // ========================================
-    // SINGLETON: Instância única
-    // ========================================
-    
-    /**
-     * Instância única do ConfigurationManager.
-     * Inicializada no momento da carga da classe (eager initialization).
-     * Garante thread-safety sem sincronização.
-     */
+    // Instância única (eager initialization - thread-safe)
     private static final ConfigurationManager instance = new ConfigurationManager();
     
-    // ========================================
-    // ATRIBUTOS
-    // ========================================
-    
-    /**
-     * Objeto Properties que armazena todas as configurações
-     * carregadas do arquivo application.properties
-     */
     private Properties properties;
     
-    // ========================================
-    // CONSTRUTOR PRIVADO
-    // ========================================
-    
-    /**
-     * Construtor privado - implementação do padrão Singleton.
-     * 
-     * IMPORTANTE: Construtor privado impede que outras classes
-     * criem instâncias diretamente usando 'new ConfigurationManager()'.
-     * 
-     * Carrega as propriedades do arquivo application.properties
-     * automaticamente na criação da instância.
-     */
+    // Construtor privado (Singleton pattern)
     private ConfigurationManager() {
         properties = new Properties();
         loadProperties();
     }
     
-    // ========================================
-    // MÉTODO DE ACESSO À INSTÂNCIA
-    // ========================================
-    
-    /**
-     * Retorna a única instância do ConfigurationManager.
-     * 
-     * PADRÃO SINGLETON: Este é o ponto de acesso global.
-     * Todas as partes do sistema devem usar este método para
-     * obter acesso às configurações.
-     * 
-     * Exemplo de uso:
-     * <pre>
-     * ConfigurationManager config = ConfigurationManager.getInstance();
-     * String valor = config.getProperty("chave");
-     * </pre>
-     * 
-     * @return A instância única do ConfigurationManager
-     */
+    // Ponto de acesso global à instância única
     public static ConfigurationManager getInstance() {
         return instance;
     }
     
-    // ========================================
-    // MÉTODOS PRIVADOS
-    // ========================================
-    
-    /**
-     * Carrega as propriedades do arquivo application.properties.
-     * 
-     * PROCESSO:
-     * 1. Busca o arquivo no classpath (src/main/resources)
-     * 2. Carrega as propriedades no objeto Properties
-     * 3. Trata erros caso o arquivo não seja encontrado
-     * 
-     * Este método é chamado automaticamente no construtor.
-     */
     private void loadProperties() {
         try (InputStream input = getClass().getClassLoader()
                 .getResourceAsStream("application.properties")) {

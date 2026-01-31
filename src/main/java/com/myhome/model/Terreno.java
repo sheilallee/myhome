@@ -53,7 +53,7 @@ public class Terreno extends Imovel {
     }
     
     @Override
-    public Imovel clone() {
+    public Imovel clonar() {
         return new Terreno(this);
     }
     

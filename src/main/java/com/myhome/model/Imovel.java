@@ -2,6 +2,7 @@ package com.myhome.model;
 
 import java.util.HashMap;
 import java.util.Map;
+import com.myhome.prototype.ImovelPrototype;
 
 /**
  * RF01 - ENTIDADE DE DOMÍNIO (Base para Factory Method + Prototype)
@@ -24,9 +25,9 @@ import java.util.Map;
  * 
  * PADRÕES RELACIONADOS:
  * - RF01: Factory Method - Imóvel é o Product
- * - RF02: Prototype - Método clone() para clonar imóveis
+ * - RF02: Prototype - Método clonar() para clonar imóveis (ImovelPrototype)
  */
-public abstract class Imovel implements Cloneable {
+public abstract class Imovel implements ImovelPrototype {
     
     // ========================================
     // ATRIBUTOS PROTEGIDOS (Compartilhados)
@@ -99,15 +100,17 @@ public abstract class Imovel implements Cloneable {
     public abstract String getTipo();
     
     /**
-     * Clona o imóvel criando uma cópia profunda.
+     * Clona o imóvel criando uma cópia profunda (Deep Copy).
      * 
      * PADRÃO PROTOTYPE (RF02):
+     * Implementação da interface ImovelPrototype.
      * Cada subclasse deve implementar a lógica de clonagem
      * adequada para seus atributos específicos.
      * 
      * @return Cópia do imóvel
      */
-    public abstract Imovel clone();
+    @Override
+    public abstract Imovel clonar();
     
     // ========================================
     // MÉTODOS PÚBLICOS
