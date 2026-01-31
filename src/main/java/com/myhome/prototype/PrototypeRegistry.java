@@ -4,31 +4,6 @@ import com.myhome.model.*;
 import com.myhome.singleton.ConfigurationManager;
 import java.util.*;
 
-/**
- * RF02 - REGISTRY DE PROTÓTIPOS (Padrão Singleton + Prototype)
- * 
- * Gerencia e fornece acesso aos protótipos padrão de imóveis.
- * 
- * RESPONSABILIDADES:
- * - Armazenar protótipos pré-configurados
- * - Carregar configurações de application.properties via ConfigurationManager
- * - Fornecer clones de protótipos sob demanda
- * - Gerar descrições automáticas dos protótipos
- * 
- * PADRÃO SINGLETON:
- * - Garante apenas uma instância durante a execução
- * - Instância única compartilhada por toda a aplicação
- * 
- * PADRÃO PROTOTYPE:
- * - Fornece objetos clonados a partir de protótipos
- * - Evita recriação de objetos do zero
- * - Permite customização rápida de imóveis padrão
- * 
- * INTEGRAÇÃO:
- * - Lê configurações de application.properties
- * - Usada em MyHomeFacade.criarAnuncioDePrototipo()
- * - Demonstrada em MyHomeFacade.demonstrarPadroesGoF()
- */
 public class PrototypeRegistry {
     
     // ========================================
@@ -39,8 +14,7 @@ public class PrototypeRegistry {
     
     /**
      * Obtém a instância única do PrototypeRegistry.
-     * 
-     * @return Instância Singleton
+     * Também utiliza o padrão Singleton aqui
      */
     public static synchronized PrototypeRegistry getInstance() {
         if (instancia == null) {
@@ -49,49 +23,15 @@ public class PrototypeRegistry {
         return instancia;
     }
     
-    // ========================================
-    // ATRIBUTOS
-    // ========================================
-    
-    /**
-     * Mapa de protótipos disponíveis.
-     * Chave: identificador do protótipo (ex: "apartamento-padrao")
-     * Valor: ImovelPrototype pronto para ser clonado
-     */
-    private Map<String, ImovelPrototype> prototipos;
-    
-    /**
-     * Descrições geradas para cada protótipo.
-     * Usado para exibição no menu interativo.
-     */
-    private Map<String, String> descricoes;
-    
-    // ========================================
-    // CONSTRUTOR
-    // ========================================
-    
-    /**
-     * Construtor privado - Singleton.
-     * 
-     * Inicializa os protótipos padrão lendo
-     * configurações de application.properties.
-     */
     private PrototypeRegistry() {
         this.prototipos = new LinkedHashMap<>();
         this.descricoes = new LinkedHashMap<>();
         inicializarPrototipos();
     }
+
+    private Map<String, ImovelPrototype> prototipos;
+    private Map<String, String> descricoes;
     
-    // ========================================
-    // INICIALIZAÇÃO DOS PROTÓTIPOS
-    // ========================================
-    
-    /**
-     * Inicializa todos os protótipos padrão.
-     * 
-     * Lê configurações de application.properties e cria
-     * imóveis pré-configurados.
-     */
     private void inicializarPrototipos() {
         ConfigurationManager config = ConfigurationManager.getInstance();
         
@@ -180,16 +120,9 @@ public class PrototypeRegistry {
         
         prototipos.put("sala-comercial-padrao", salaPadrao);
         
-        // Gera descrições para todos os protótipos
         gerarDescricoes();
     }
     
-    /**
-     * Gera descrições automáticas para cada protótipo.
-     * 
-     * Estas descrições são exibidas no menu interativo
-     * para orientar o usuário na escolha.
-     */
     private void gerarDescricoes() {
         for (Map.Entry<String, ImovelPrototype> entry : prototipos.entrySet()) {
             String chave = entry.getKey();
@@ -198,23 +131,12 @@ public class PrototypeRegistry {
         }
     }
     
-    // ========================================
-    // MÉTODOS PÚBLICOS
-    // ========================================
-    
-    /**
-     * Obtém um clone de um protótipo específico.
-     * 
-     * @param chave Identificador do protótipo (ex: "apartamento-padrao")
-     * @return Clone do protótipo, ou null se não encontrado
-     */
     public Imovel obterPrototipo(String chave) {
         ImovelPrototype prototipo = prototipos.get(chave);
         if (prototipo == null) {
             return null;
         }
         
-        // Clona e retorna uma cópia independente
         Imovel clone = prototipo.clonar();
         
         // Log para fins didáticos (mostra o padrão em ação)
@@ -223,33 +145,14 @@ public class PrototypeRegistry {
         return clone;
     }
     
-    /**
-     * Lista todas as chaves de protótipos disponíveis.
-     * 
-     * @return Set com as chaves (em ordem de inserção)
-     */
     public Set<String> listarChaves() {
         return new LinkedHashSet<>(prototipos.keySet());
     }
     
-    /**
-     * Obtém a descrição de um protótipo.
-     * 
-     * @param chave Identificador do protótipo
-     * @return Descrição formatada
-     */
     public String obterDescricao(String chave) {
         return descricoes.getOrDefault(chave, "Protótipo desconhecido");
     }
     
-    /**
-     * Gera descrição automática para um imóvel.
-     * 
-     * Baseada no tipo e atributos específicos do imóvel.
-     * 
-     * @param imovel Imóvel para o qual gerar descrição
-     * @return String descritiva
-     */
     public String gerarDescricaoPrototipo(Imovel imovel) {
         if (imovel instanceof Casa) {
             Casa casa = (Casa) imovel;
@@ -286,11 +189,6 @@ public class PrototypeRegistry {
         return "Imóvel desconhecido";
     }
     
-    /**
-     * Retorna todas as descrições dos protótipos.
-     * 
-     * @return Map com chave → descrição
-     */
     public Map<String, String> obterTodasDescricoes() {
         return new LinkedHashMap<>(descricoes);
     }

@@ -1,30 +1,11 @@
 package com.myhome.model;
 
-/**
- * RF01 - PRODUTO CONCRETO (Factory Method Pattern)
- * 
- * Representa uma Sala Comercial no sistema MyHome.
- * 
- * CARACTERÍSTICAS ESPECÍFICAS:
- * - Andar da sala
- * - Presença de banheiro próprio
- * - Capacidade de pessoas
- * - Vagas de estacionamento
- */
 public class SalaComercial extends Imovel {
-    
-    // ========================================
-    // ATRIBUTOS ESPECÍFICOS DE SALA COMERCIAL
-    // ========================================
     
     private int andar;
     private boolean temBanheiro;
     private int capacidadePessoas;
     private int vagasEstacionamento;
-    
-    // ========================================
-    // CONSTRUTORES
-    // ========================================
     
     public SalaComercial() {
         super();
@@ -46,10 +27,6 @@ public class SalaComercial extends Imovel {
         this.vagasEstacionamento = original.vagasEstacionamento;
     }
     
-    // ========================================
-    // IMPLEMENTAÇÃO DOS MÉTODOS ABSTRATOS
-    // ========================================
-    
     @Override
     public String getTipo() {
         return this.tipo;
@@ -59,10 +36,6 @@ public class SalaComercial extends Imovel {
     public Imovel clonar() {
         return new SalaComercial(this);
     }
-    
-    // ========================================
-    // GETTERS E SETTERS
-    // ========================================
     
     public int getAndar() {
         return andar;

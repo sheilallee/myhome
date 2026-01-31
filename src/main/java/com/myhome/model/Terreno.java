@@ -1,28 +1,10 @@
 package com.myhome.model;
 
-/**
- * RF01 - PRODUTO CONCRETO (Factory Method Pattern)
- * 
- * Representa um Terreno no sistema MyHome.
- * 
- * CARACTERÍSTICAS ESPECÍFICAS:
- * - Área do terreno
- * - Tipo de zoneamento (Residencial, Comercial, Misto, Industrial)
- * - Topografia (Plano, Aclive, Declive)
- */
 public class Terreno extends Imovel {
-    
-    // ========================================
-    // ATRIBUTOS ESPECÍFICOS DE TERRENO
-    // ========================================
     
     private double areaTerreno; // Pode ser diferente da área construível
     private String zoneamento; // Residencial, Comercial, Misto, Industrial
     private String topografia; // Plano, Aclive, Declive
-    
-    // ========================================
-    // CONSTRUTORES
-    // ========================================
     
     public Terreno() {
         super();
@@ -43,10 +25,6 @@ public class Terreno extends Imovel {
         this.topografia = original.topografia;
     }
     
-    // ========================================
-    // IMPLEMENTAÇÃO DOS MÉTODOS ABSTRATOS
-    // ========================================
-    
     @Override
     public String getTipo() {
         return this.tipo;
@@ -56,10 +34,6 @@ public class Terreno extends Imovel {
     public Imovel clonar() {
         return new Terreno(this);
     }
-    
-    // ========================================
-    // VALIDAÇÃO ESPECÍFICA
-    // ========================================
     
     @Override
     public boolean validar() {
@@ -73,10 +47,6 @@ public class Terreno extends Imovel {
         
         return true;
     }
-    
-    // ========================================
-    // GETTERS E SETTERS
-    // ========================================
     
     public double getAreaTerreno() {
         return areaTerreno;
