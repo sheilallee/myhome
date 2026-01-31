@@ -2,9 +2,24 @@ package com.myhome.service;
 
 import com.myhome.factory.*;
 import com.myhome.model.*;
+import com.myhome.observer.LogObserver;
+import com.myhome.observer.NotificationObserver;
+import com.myhome.strategy.NotificationManager;
 import java.util.Scanner;
 
-// Serviço de criação de anúncios usando Factory Method Pattern
+/**
+ * SERVIÇO DE GERENCIAMENTO DE ANÚNCIOS
+ * 
+ * RESPONSABILIDADE:
+ * - Encapsular a lógica de criação de anúncios usando Factory Method Pattern
+ * - Garantir configuração automática de observers (RF04)
+ * - Fornecer interface de alto nível para criação de anúncios
+ * 
+ * PRINCÍPIOS SOLID APLICADOS:
+ * - SRP: Responsável apenas por gerenciar anúncios
+ * - DIP: Cliente depende desta interface, não do Builder concreto
+ * - ISP: Interface coesa com métodos específicos para cada tipo de anúncio
+ */
 public class AnuncioService {
     
     private final MenuService menuService;
@@ -16,7 +31,22 @@ public class AnuncioService {
         this.validadorService = validadorService;
         this.usuarioService = usuarioService;
     }
+
+    // =====================================================
+    // CONFIGURAÇÃO DE OBSERVERS (RF04)
+    // =====================================================
+
+    private void configurarObservers(Anuncio anuncio) {
+        LoggerService logger = new LoggerService();
+        NotificationManager manager = new NotificationManager();
+
+        anuncio.adicionarObserver(new LogObserver(logger));
+        anuncio.adicionarObserver(new NotificationObserver(manager));
+    }
     
+    /**
+     * Cria um anúncio interativo através da linha de comando usando Factory Method.
+     */
     public Anuncio criarAnuncioInterativo(Scanner scanner, Imovel imovel) {
         menuService.exibirPasso("PASSO 2: CRIAR ANÚNCIO (FACTORY)");
         
@@ -53,7 +83,9 @@ public class AnuncioService {
             return null;
         }
         
-        return factory.criarAnuncio(titulo, preco, descricao, imovel, anunciante);
+        Anuncio anuncio = factory.criarAnuncio(titulo, preco, descricao, imovel, anunciante);
+        configurarObservers(anuncio);
+        return anuncio;
     }
     
     /**

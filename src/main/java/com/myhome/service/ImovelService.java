@@ -5,7 +5,9 @@ import com.myhome.builder.ImovelBuilderImpl;
 import com.myhome.model.*;
 import java.util.Scanner;
 
-// Serviço de criação de imóveis usando Builder Pattern
+/**
+ * Serviço de criação de imóveis usando Builder Pattern e Factory Pattern
+ */
 public class ImovelService {
     
     private final MenuService menuService;
@@ -16,6 +18,9 @@ public class ImovelService {
         this.validadorService = validadorService;
     }
     
+    /**
+     * Cria um imóvel interativamente através de linha de comando usando Builder Pattern.
+     */
     public Imovel criarImovelInterativo(Scanner scanner) {
         menuService.exibirPasso("PASSO 1: CRIAR IMÓVEL (BUILDER)");
         
@@ -106,5 +111,108 @@ public class ImovelService {
             builder.setTemBanheiro(temBanheiro)
                    .setCapacidadePessoas(capacidade);
         }
+    }
+    
+    
+    // =====================================================
+    // MÉTODOS DE CRIAÇÃO COM FACTORY PATTERN
+    // =====================================================
+
+    /**
+     * Cria uma casa com configuração padrão básica.
+     * 
+     * @param endereco Endereço da casa
+     * @param area Área total em m²
+     * @return Casa configurada e validada
+     */
+    public Casa criarCasaBasica(Endereco endereco, double area) {
+        Casa casa = new Casa();
+        
+        casa.setEndereco(endereco);
+        casa.setArea(area);
+        
+        return casa;
+    }
+    
+    /**
+     * Cria uma casa com todas as configurações.
+     */
+    public Casa criarCasa(Endereco endereco, double area, int quartos, int banheiros, 
+                         boolean temQuintal, boolean temGaragem, int vagas) {
+        Casa casa = new Casa();
+        
+        casa.setEndereco(endereco);
+        casa.setArea(area);
+        casa.setQuartos(quartos);
+        casa.setBanheiros(banheiros);
+        casa.setTemQuintal(temQuintal);
+        casa.setTemGaragem(temGaragem);
+        casa.setVagas(vagas);
+        
+        return casa;
+    }
+    
+    /**
+     * Cria um apartamento com configuração padrão.
+     */
+    public Apartamento criarApartamentoBasico(Endereco endereco, double area, int andar) {
+        Apartamento apartamento = new Apartamento();
+        
+        apartamento.setEndereco(endereco);
+        apartamento.setArea(area);
+        apartamento.setAndar(andar);
+        apartamento.setQuartos(2);
+        apartamento.setBanheiros(1);
+        apartamento.setTemElevador(andar > 2);
+        apartamento.setVagas(1);
+        
+        return apartamento;
+    }
+    
+    /**
+     * Cria um apartamento personalizado.
+     */
+    public Apartamento criarApartamento(Endereco endereco, double area, int quartos, 
+                                       int banheiros, int andar, boolean temElevador, int vagas) {
+        Apartamento apartamento = new Apartamento();
+        
+        apartamento.setEndereco(endereco);
+        apartamento.setArea(area);
+        apartamento.setQuartos(quartos);
+        apartamento.setBanheiros(banheiros);
+        apartamento.setAndar(andar);
+        apartamento.setTemElevador(temElevador);
+        apartamento.setVagas(vagas);
+        
+        return apartamento;
+    }
+    
+    /**
+     * Cria um terreno básico.
+     */
+    public Terreno criarTerrenoBasico(Endereco endereco, double area, String zoneamento) {
+        Terreno terreno = new Terreno();
+        
+        terreno.setEndereco(endereco);
+        terreno.setArea(area);
+        terreno.setZoneamento(zoneamento);
+        terreno.setTopografia("Plano");
+        
+        return terreno;
+    }
+    
+    /**
+     * Cria uma sala comercial básica.
+     */
+    public SalaComercial criarSalaComercialBasica(Endereco endereco, double area, int andar) {
+        SalaComercial sala = new SalaComercial();
+        
+        sala.setEndereco(endereco);
+        sala.setArea(area);
+        sala.setAndar(andar);
+        sala.setCapacidadePessoas(10);
+        sala.setTemBanheiro(true);
+        
+        return sala;
     }
 }

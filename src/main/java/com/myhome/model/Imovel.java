@@ -53,7 +53,7 @@ public abstract class Imovel implements ImovelPrototype {
      * Endereço completo do imóvel
      * Em uma versão futura, pode ser um objeto Endereco
      */
-    protected String endereco;
+    protected Endereco endereco;
     
     /**
      * Descrição adicional do imóvel
@@ -128,7 +128,7 @@ public abstract class Imovel implements ImovelPrototype {
         if (area <= 0) {
             return false;
         }
-        if (endereco == null || endereco.trim().isEmpty()) {
+        if (endereco == null || endereco.getCidade() == null || endereco.getCidade().trim().isEmpty()) {
             return false;
         }
         return true;
@@ -187,11 +187,11 @@ public abstract class Imovel implements ImovelPrototype {
         this.area = area;
     }
     
-    public String getEndereco() {
+    public Endereco getEndereco() {
         return endereco;
     }
     
-    public void setEndereco(String endereco) {
+    public void setEndereco(Endereco endereco) {
         this.endereco = endereco;
     }
     
@@ -213,7 +213,6 @@ public abstract class Imovel implements ImovelPrototype {
     
     @Override
     public String toString() {
-        return String.format("%s - %.2fm² - %s", 
-            getTipo(), area, endereco);
+        return String.format("%s - %.2fm² - %s", getTipo(), area, endereco != null ? endereco.toString() : "Endereço não informado");
     }
 }
