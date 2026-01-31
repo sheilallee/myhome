@@ -3,11 +3,13 @@ package com.myhome.facade;
 import com.myhome.builder.*;
 import com.myhome.factory.*;
 import com.myhome.model.*;
+import com.myhome.prototype.*;
 import com.myhome.service.*;
 import com.myhome.singleton.ConfigurationManager;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
+import java.util.Set;
 
 // RF08 - Facade: orquestra todos os subsistemas do MyHome
 public class MyHomeFacade {
@@ -167,8 +169,8 @@ public class MyHomeFacade {
                 
                 switch (opcao) {
                     case 1:
-                        System.out.println("🔧 Funcionalidade 'Prototype' será implementada em RF02");
-                        pausar(scanner);
+                        criarAnuncioDePrototipo(scanner);
+                        voltar = true; // Volta ao menu principal após criar
                         break;
                     case 2:
                         criarAnuncioInterativo(scanner);
@@ -432,6 +434,152 @@ public class MyHomeFacade {
     }
     
     /**
+     * RF02 - CRIAR ANÚNCIO A PARTIR DE PROTÓTIPO
+     * 
+     * Fluxo: PrototypeRegistry → Clonar → Customizar → Factory Method
+     * 
+     * PADRÃO PROTOTYPE:
+     * - Obtém protótipo pré-configurado do PrototypeRegistry
+     * - Clona usando método clonar() da interface ImovelPrototype
+     * - Permite customização do endereço (obrigatório)
+     * - Valida antes de prosseguir com Factory
+     */
+    public void criarAnuncioDePrototipo(Scanner scanner) {
+        System.out.println("╔════════════════════════════════════════╗");
+        System.out.println("║   CRIAR ANÚNCIO DE PROTÓTIPO          ║");
+        System.out.println("║   (Padrão Prototype - RF02)            ║");
+        System.out.println("╚════════════════════════════════════════╝\n");
+        
+        try {
+            // PASSO 1: Listar protótipos disponíveis
+            PrototypeRegistry registro = PrototypeRegistry.getInstance();
+            Set<String> chaves = registro.listarChaves();
+            
+            System.out.println("🏘️  Protótipos Disponíveis:\n");
+            List<String> chavesLista = new ArrayList<>(chaves);
+            for (int i = 0; i < chavesLista.size(); i++) {
+                String chave = chavesLista.get(i);
+                String descricao = registro.obterDescricao(chave);
+                System.out.println("  [" + (i + 1) + "] " + descricao);
+            }
+            
+            System.out.print("\n➤ Escolha o protótipo: ");
+            int opcao = Integer.parseInt(scanner.nextLine().trim());
+            
+            if (opcao < 1 || opcao > chavesLista.size()) {
+                System.out.println("\n❌ Opção inválida!");
+                return;
+            }
+            
+            String chavePrototipo = chavesLista.get(opcao - 1);
+            
+            // PASSO 2: CLONAR o protótipo (Prototype Pattern)
+            Imovel imovel = registro.obterPrototipo(chavePrototipo);
+            
+            if (imovel == null) {
+                System.out.println("\n❌ Protótipo não encontrado!");
+                return;
+            }
+            
+            System.out.println("\n┌────────────────────────────────────────┐");
+            System.out.println("│  PASSO 1: IMÓVEL CLONADO COM SUCESSO   │");
+            System.out.println("└────────────────────────────────────────┘");
+            System.out.println("\n✅ Imóvel clonado: " + registro.gerarDescricaoPrototipo(imovel));
+            System.out.println("   Hash do clone: " + imovel.hashCode());
+            System.out.println("   (objeto independente pronto para customização)\n");
+            
+            // PASSO 3: CUSTOMIZAR o imóvel clonado
+            customizarImovelClonado(scanner, imovel);
+            
+            // PASSO 4: VALIDAR antes de prosseguir
+            if (!imovel.validar()) {
+                System.out.println("\n❌ Imóvel inválido após customização!");
+                System.out.println("   Verifique os dados informados.\n");
+                return;
+            }
+            
+            System.out.println("\n✅ Imóvel validado com sucesso!");
+            
+            // PASSO 5: FACTORY METHOD - Criar Anúncio
+            Anuncio anuncio = criarAnuncioComFactory(scanner, imovel);
+            
+            if (anuncio == null) {
+                System.out.println("\n❌ Criação de anúncio cancelada.\n");
+                return;
+            }
+            
+            // Adicionar à lista de anúncios
+            meusAnuncios.add(anuncio);
+            contadorAnuncios++;
+            
+            // Salvar em arquivo JSON
+            persistenciaService.salvarAnuncios(meusAnuncios);
+            
+            // Exibir resultado final
+            exibirResultadoAnuncio(anuncio);
+            
+        } catch (NumberFormatException e) {
+            System.out.println("\n❌ Entrada inválida! Digite um número.");
+        } catch (Exception e) {
+            System.out.println("\n❌ Erro ao criar anúncio de protótipo: " + e.getMessage() + "\n");
+        }
+    }
+    
+    /**
+     * Customiza um imóvel clonado a partir de protótipo.
+     * 
+     * @param scanner Scanner para entrada do usuário
+     * @param imovel Imóvel a customizar
+     */
+    private void customizarImovelClonado(Scanner scanner, Imovel imovel) {
+        System.out.println("\n┌────────────────────────────────────────┐");
+        System.out.println("│  PASSO 2: CUSTOMIZAR IMÓVEL            │");
+        System.out.println("└────────────────────────────────────────┘\n");
+        
+        // Endereço é OBRIGATÓRIO
+        System.out.print("📍 Endereço (obrigatório): ");
+        String endereco = scanner.nextLine().trim();
+        
+        if (endereco.isEmpty()) {
+            System.out.println("❌ Endereço não pode ser vazio!");
+            customizarImovelClonado(scanner, imovel);
+            return;
+        }
+        
+        imovel.setEndereco(endereco);
+        
+        // Oferece customização opcional de área
+        System.out.print("\n🔧 Deseja alterar a área? (s/n): ");
+        if (scanner.nextLine().trim().equalsIgnoreCase("s")) {
+            System.out.print("📏 Digite a nova área (m²): ");
+            try {
+                double novaArea = Double.parseDouble(scanner.nextLine().trim());
+                if (novaArea > 0) {
+                    imovel.setArea(novaArea);
+                    System.out.println("✅ Área alterada para: " + novaArea + "m²");
+                } else {
+                    System.out.println("❌ Área deve ser maior que zero!");
+                }
+            } catch (NumberFormatException e) {
+                System.out.println("❌ Valor inválido!");
+            }
+        }
+        
+        // Oferece customização opcional de descrição
+        System.out.print("\n🔧 Deseja adicionar descrição? (s/n): ");
+        if (scanner.nextLine().trim().equalsIgnoreCase("s")) {
+            System.out.print("📝 Descrição: ");
+            String descricao = scanner.nextLine().trim();
+            if (!descricao.isEmpty()) {
+                imovel.setDescricao(descricao);
+                System.out.println("✅ Descrição adicionada");
+            }
+        }
+        
+        System.out.println("\n✅ Customização concluída!");
+    }
+    
+    /**
      * Exibe resultado final do anúncio criado
      */
     private void exibirResultadoAnuncio(Anuncio anuncio) {
@@ -561,7 +709,7 @@ public class MyHomeFacade {
     public void demonstrarPadroesGoF() {
         System.out.println("╔════════════════════════════════════════╗");
         System.out.println("║   DEMONSTRAÇÃO PADRÕES GOF             ║");
-        System.out.println("║   RF01 + RF07                          ║");
+        System.out.println("║   RF01 + RF02 + RF07                   ║");
         System.out.println("╚════════════════════════════════════════╝\n");
         
         System.out.println("📚 PADRÕES IMPLEMENTADOS NO MYHOME:\n");
@@ -572,24 +720,54 @@ public class MyHomeFacade {
         
         System.out.println("✅ RF01 - BUILDER (Construção de Imóveis)");
         System.out.println("   → ImovelBuilder, ImovelBuilderImpl");
-        System.out.println("   → Usado na opção: 1 - Criar novo anúncio\n");
+        System.out.println("   → Usado na opção: 1 - Criar novo anúncio → Criar do zero\n");
         
         System.out.println("✅ RF01 - DIRECTOR");
         System.out.println("   → Director (sequências pré-definidas)");
         System.out.println("   → Disponível para construções automatizadas\n");
+        
+        System.out.println("✅ RF02 - PROTOTYPE (Modelos Padrão de Imóveis)");
+        System.out.println("   → Interface: ImovelPrototype (método clonar())");
+        System.out.println("   → Singleton: PrototypeRegistry (armazena e fornece clones)");
+        demonstrarPrototype();
+        System.out.println("   → Usado na opção: 1 - Criar novo anúncio → Usar modelo padrão\n");
         
         System.out.println("✅ RF07 - SINGLETON (Configurações)");
         System.out.println("   → ConfigurationManager");
         System.out.println("   → Usado na opção: 4 - Configurações\n");
         
         System.out.println("💡 COMO TESTAR:");
-        System.out.println("   1. Use a opção '1' para criar anúncios (Builder + Factory)");
-        System.out.println("   2. Use a opção '3' para ver seus anúncios cadastrados");
-        System.out.println("   3. Use a opção '4' para ver o Singleton em ação\n");
+        System.out.println("   1. Use a opção '1' → '2' para criar anúncio com Builder");
+        System.out.println("   2. Use a opção '1' → '1' para criar anúncio com Prototype");
+        System.out.println("   3. Use a opção '3' para ver seus anúncios cadastrados");
+        System.out.println("   4. Use a opção '4' para ver o Singleton em ação\n");
         
         System.out.println("═".repeat(60));
         System.out.println("✅ Todos os padrões estão funcionando via terminal!");
         System.out.println("═".repeat(60) + "\n");
+    }
+    
+    /**
+     * Demonstra o funcionamento do padrão Prototype em detalhes.
+     */
+    private void demonstrarPrototype() {
+        System.out.println("   ┌ DEMONSTRAÇÃO LIVE ┐");
+        
+        PrototypeRegistry registro = PrototypeRegistry.getInstance();
+        
+        // Obtém um protótipo
+        Imovel original = registro.obterPrototipo("apartamento-padrao");
+        
+        // Clona o protótipo
+        Imovel clone1 = registro.obterPrototipo("apartamento-padrao");
+        Imovel clone2 = registro.obterPrototipo("apartamento-padrao");
+        
+        System.out.println("   • Original: " + original.hashCode());
+        System.out.println("   • Clone 1: " + clone1.hashCode());
+        System.out.println("   • Clone 2: " + clone2.hashCode());
+        System.out.println("   ✓ São objetos diferentes (hashcodes distintos)");
+        System.out.println("   ✓ Cada clone é independente para customização");
+        System.out.println("   └──────────────────┘");
     }
     
     // ================================================================

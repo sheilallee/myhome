@@ -87,13 +87,14 @@ public class Casa extends Imovel {
      * Clona a casa criando uma cópia independente.
      * 
      * PADRÃO PROTOTYPE (RF02):
+     * Implementação da interface ImovelPrototype.
      * Cria uma nova instância com os mesmos valores,
      * mas como objeto independente (deep copy).
      * 
      * Útil para criar imóveis baseados em protótipos padrão.
      */
     @Override
-    public Imovel clone() {
+    public Imovel clonar() {
         return new Casa(this);
     }
     
