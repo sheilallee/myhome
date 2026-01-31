@@ -17,7 +17,7 @@ public class SalaComercial extends Imovel {
         this.id = original.id;
         this.tipo = original.tipo;
         this.area = original.area;
-        this.endereco = original.endereco;
+        this.endereco = original.endereco != null ? original.endereco.clone() : null;
         this.descricao = original.descricao;
         this.caracteristicas.putAll(original.caracteristicas);
         

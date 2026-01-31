@@ -13,6 +13,11 @@ public class Endereco {
         this.cep = cep;
     }
 
+    public Endereco clone() {
+        Endereco enderecoClone = new Endereco(this.rua, this.cidade, this.estado, this.cep);
+        return enderecoClone;
+    }
+
     public String getRua() {
         return rua;
     }

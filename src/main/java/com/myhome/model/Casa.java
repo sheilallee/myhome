@@ -19,10 +19,10 @@ public class Casa extends Imovel {
         this.id = original.id;
         this.tipo = original.tipo;
         this.area = original.area;
-        this.endereco = original.endereco;
         this.descricao = original.descricao;
         
-        // Copia características (deep copy)
+        // Copia características (Deep copy)
+        this.endereco = original.endereco != null ? original.endereco.clone() : null;
         this.caracteristicas.putAll(original.caracteristicas);
         
         // Copia atributos específicos de Casa
