@@ -7,10 +7,6 @@ public class ValidadorPalavras extends ModeradorBase {
     // Lista de palavras proibidas carregada do application.properties via Singleton
     private final java.util.List<String> termosProibidos;
     
-    /**
-     * Utilizando o Singleton ConfigurationManager para obter
-     * a lista de termos proibidos do arquivo application.properties.
-     */
     public ValidadorPalavras() {
         this.termosProibidos = ConfigurationManager.getInstance().getTermosProibidos();
     }
@@ -18,12 +14,16 @@ public class ValidadorPalavras extends ModeradorBase {
     @Override
     public boolean handle(Anuncio anuncio) {
         String descricao = anuncio.getDescricao();
+        
+        // Validar descrição contra lista de termos proibidos
         for (String termo : termosProibidos) {
             if (descricao != null && descricao.toLowerCase().contains(termo.toLowerCase())) {
-                System.out.println("Anúncio rejeitado por conter termo proibido: " + termo);
-                return false; // Rejeita o anúncio
+                System.out.println("Anúncio rejeitado por conter termo proibido: '" + termo + "'");
+                return false; // Rejeita o anúncio imediatamente
             }
         }
+        
+        // Nenhum termo proibido encontrado, passar para o próximo validador
         return handleNext(anuncio);
     }
 
