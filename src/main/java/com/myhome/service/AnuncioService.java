@@ -6,14 +6,16 @@ import com.myhome.builder.Director;
 import com.myhome.model.Anuncio;
 import com.myhome.model.Imovel;
 import com.myhome.model.Usuario;
-
+import com.myhome.observer.LogObserver;
+import com.myhome.observer.NotificationObserver;
+import com.myhome.strategy.NotificationManager;
 /**
  * SERVIÇO DE GERENCIAMENTO DE ANÚNCIOS
  * 
  * RESPONSABILIDADE:
  * - Encapsular a lógica de criação de anúncios usando Builder Pattern
+ * - Garantir configuração automática de observers (RF04)
  * - Fornecer interface de alto nível para criação de anúncios
- * - Ocultar detalhes do Builder e Director do cliente
  * 
  * PRINCÍPIOS SOLID APLICADOS:
  * - SRP: Responsável apenas por gerenciar anúncios
@@ -33,46 +35,77 @@ public class AnuncioService {
         this.builder = new AnuncioBuilderImpl();
         this.director = new Director(builder);
     }
+
+    // =====================================================
+    // CONFIGURAÇÃO DE OBSERVERS (RF04)
+    // =====================================================
+
+    /**
+     * Configura automaticamente os observers do anúncio:
+     * - Log de mudança de estado
+     * - Notificação ao anunciante
+     */
+    private void configurarObservers(Anuncio anuncio) {
+        LoggerService logger = new LoggerService();
+        NotificationManager manager = new NotificationManager();
+
+        anuncio.adicionarObserver(new LogObserver(logger));
+        anuncio.adicionarObserver(new NotificationObserver(manager));
+    }
     
+    // =====================================================
+    // MÉTODOS DE CRIAÇÃO DE ANÚNCIOS
+    // =====================================================
+
     /**
      * Cria um anúncio simples (uso mais comum).
-     * 
-     * @param titulo Título do anúncio
-     * @param preco Preço do imóvel
-     * @param imovel Imóvel a ser anunciado
-     * @param anunciante Usuário que está anunciando
-     * @return Anúncio criado e validado
      */
     public Anuncio criarAnuncioSimples(String titulo, double preco, 
                                        Imovel imovel, Usuario anunciante) {
-        return director.construirAnuncioSimples(titulo, preco, imovel, anunciante);
+
+        Anuncio anuncio = director.construirAnuncioSimples(
+            titulo, preco, imovel, anunciante
+        );
+
+        configurarObservers(anuncio);
+        return anuncio;
     }
-    
+
     /**
      * Cria um anúncio completo com descrição e fotos.
      */
     public Anuncio criarAnuncioCompleto(String titulo, double preco, String descricao,
-                                       Imovel imovel, Usuario anunciante, String[] fotos) {
-        return director.construirAnuncioCompleto(titulo, preco, descricao, 
-                                                imovel, anunciante, fotos);
+                                        Imovel imovel, Usuario anunciante, String[] fotos) {
+
+        Anuncio anuncio = director.construirAnuncioCompleto(
+            titulo, preco, descricao, imovel, anunciante, fotos
+        );
+
+        configurarObservers(anuncio);
+        return anuncio;
     }
     
     /**
      * Cria um anúncio profissional para imobiliárias.
      */
     public Anuncio criarAnuncioImobiliaria(String titulo, double preco, String descricao,
-                                          Imovel imovel, Usuario imobiliaria, String[] fotos) {
-        return director.construirAnuncioImobiliaria(titulo, preco, descricao, 
-                                                   imovel, imobiliaria, fotos);
+                                           Imovel imovel, Usuario imobiliaria, String[] fotos) {
+
+        Anuncio anuncio = director.construirAnuncioImobiliaria(
+            titulo, preco, descricao, imovel, imobiliaria, fotos
+        );
+
+        configurarObservers(anuncio);
+        return anuncio;
     }
     
     /**
      * Cria um anúncio personalizado (quando os métodos acima não atendem).
-     * Ainda assim, encapsula o uso do Builder.
      */
     public Anuncio criarAnuncioPersonalizado(String titulo, String descricao, 
-                                            double preco, Imovel imovel, 
-                                            Usuario anunciante, String[] fotos) {
+                                             double preco, Imovel imovel, 
+                                             Usuario anunciante, String[] fotos) {
+
         builder.reset();
         builder.setTitulo(titulo);
         builder.setDescricao(descricao);
@@ -86,7 +119,9 @@ public class AnuncioService {
             }
         }
         
-        return builder.build();
+        Anuncio anuncio = builder.build();
+        configurarObservers(anuncio);
+        return anuncio;
     }
     
     /**

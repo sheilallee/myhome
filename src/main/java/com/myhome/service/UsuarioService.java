@@ -1,6 +1,9 @@
 package com.myhome.service;
 
 import com.myhome.model.Usuario;
+import com.myhome.strategy.EmailNotificacao;
+import com.myhome.strategy.SMSNotificacao;
+import com.myhome.strategy.WhatsAppNotificacao;
 
 /**
  * SERVIÇO DE GERENCIAMENTO DE USUÁRIOS
@@ -8,7 +11,7 @@ import com.myhome.model.Usuario;
  * RESPONSABILIDADE:
  * - Encapsular a lógica de criação e gerenciamento de usuários
  * - Fornecer interface de alto nível para operações com usuários
- * - Validar regras de negócio relacionadas a usuários
+ * - Definir preferências de notificação (RF05 - Strategy)
  * 
  * PRINCÍPIOS SOLID APLICADOS:
  * - SRP: Responsável apenas por gerenciar usuários
@@ -16,6 +19,10 @@ import com.myhome.model.Usuario;
  */
 public class UsuarioService {
     
+    // ========================================
+    // CRIAÇÃO DE USUÁRIOS
+    // ========================================
+
     /**
      * Cria um usuário proprietário.
      */
@@ -51,7 +58,11 @@ public class UsuarioService {
         usuario.setTipo(Usuario.TipoUsuario.COMPRADOR);
         return usuario;
     }
-    
+
+    // ========================================
+    // REGRAS DE NEGÓCIO
+    // ========================================
+
     /**
      * Verifica se um usuário pode criar anúncios.
      */
@@ -64,5 +75,37 @@ public class UsuarioService {
      */
     public boolean isAdministrador(Usuario usuario) {
         return usuario.isAdministrador();
+    }
+
+    // ========================================
+    // CONFIGURAÇÃO DE NOTIFICAÇÃO (RF05)
+    // ========================================
+
+    /**
+     * Define o canal de notificação do usuário como Email.
+     * (Strategy Pattern - RF05)
+     */
+    public void configurarCanalEmail(Usuario usuario) {
+        usuario.setCanalNotificacao(
+            new EmailNotificacao(new EmailService())
+        );
+    }
+
+    /**
+     * Define o canal de notificação do usuário como SMS.
+     */
+    public void configurarCanalSMS(Usuario usuario) {
+        usuario.setCanalNotificacao(
+            new SMSNotificacao()
+        );
+    }
+
+    /**
+     * Define o canal de notificação do usuário como WhatsApp.
+     */
+    public void configurarCanalWhatsApp(Usuario usuario) {
+        usuario.setCanalNotificacao(
+            new WhatsAppNotificacao()
+        );
     }
 }
