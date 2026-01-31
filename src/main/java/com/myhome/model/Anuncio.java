@@ -6,6 +6,8 @@ import java.util.List;
 
 import com.myhome.state.AnuncioState;
 import com.myhome.observer.AnuncioObserver;
+import com.myhome.state.RascunhoState;
+
 
 /**
  * RF01 - ENTIDADE DE DOMÍNIO (Produto do Builder Pattern)
@@ -52,6 +54,8 @@ public class Anuncio {
     public Anuncio() {
         this.fotos = new ArrayList<>();
         this.dataCriacao = new Date();
+        this.estado = new RascunhoState(); // ESTADO INICIAL
+
     }
 
     // ========================================
