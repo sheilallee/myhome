@@ -52,7 +52,7 @@ public abstract class Imovel implements Cloneable {
      * Endereço completo do imóvel
      * Em uma versão futura, pode ser um objeto Endereco
      */
-    protected Endereco endereco;
+    protected String endereco;
     
     /**
      * Descrição adicional do imóvel
@@ -125,7 +125,7 @@ public abstract class Imovel implements Cloneable {
         if (area <= 0) {
             return false;
         }
-        if (endereco == null || endereco.getCidade() == null || endereco.getCidade().trim().isEmpty()) {
+        if (endereco == null || endereco.trim().isEmpty()) {
             return false;
         }
         return true;
@@ -184,11 +184,11 @@ public abstract class Imovel implements Cloneable {
         this.area = area;
     }
     
-    public Endereco getEndereco() {
+    public String getEndereco() {
         return endereco;
     }
     
-    public void setEndereco(Endereco endereco) {
+    public void setEndereco(String endereco) {
         this.endereco = endereco;
     }
     
@@ -210,6 +210,7 @@ public abstract class Imovel implements Cloneable {
     
     @Override
     public String toString() {
-        return String.format("%s - %.2fm² - %s", getTipo(), area, endereco != null ? endereco.toString() : "Endereço não informado");
+        return String.format("%s - %.2fm² - %s", 
+            getTipo(), area, endereco);
     }
 }
