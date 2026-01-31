@@ -25,7 +25,7 @@ public class ImovelService {
      * @param area Área total em m²
      * @return Casa configurada e validada
      */
-    public Casa criarCasaBasica(Endereco endereco, double area) {
+    public Casa criarCasaBasica(String endereco, double area) {
         ImovelFactory factory = new CasaFactory();
         Casa casa = (Casa) factory.criarImovel();
         
@@ -42,7 +42,7 @@ public class ImovelService {
     /**
      * Cria uma casa personalizada com todas as características.
      */
-    public Casa criarCasa(Endereco endereco, double area, int quartos, int banheiros, 
+    public Casa criarCasa(String endereco, double area, int quartos, int banheiros, 
                          boolean temQuintal, boolean temGaragem, int vagas) {
         ImovelFactory factory = new CasaFactory();
         Casa casa = (Casa) factory.criarImovel();
@@ -61,7 +61,7 @@ public class ImovelService {
     /**
      * Cria um apartamento com configuração padrão.
      */
-    public Apartamento criarApartamentoBasico(Endereco endereco, double area, int andar) {
+    public Apartamento criarApartamentoBasico(String endereco, double area, int andar) {
         ImovelFactory factory = new ApartamentoFactory();
         Apartamento apartamento = (Apartamento) factory.criarImovel();
         
@@ -79,7 +79,7 @@ public class ImovelService {
     /**
      * Cria um apartamento personalizado.
      */
-    public Apartamento criarApartamento(Endereco endereco, double area, int quartos, 
+    public Apartamento criarApartamento(String endereco, double area, int quartos, 
                                        int banheiros, int andar, boolean temElevador, int vagas) {
         ImovelFactory factory = new ApartamentoFactory();
         Apartamento apartamento = (Apartamento) factory.criarImovel();
@@ -98,7 +98,7 @@ public class ImovelService {
     /**
      * Cria um terreno básico.
      */
-    public Terreno criarTerrenoBasico(Endereco endereco, double area, String zoneamento) {
+    public Terreno criarTerrenoBasico(String endereco, double area, String zoneamento) {
         ImovelFactory factory = new TerrenoFactory();
         Terreno terreno = (Terreno) factory.criarImovel();
         
@@ -114,7 +114,7 @@ public class ImovelService {
     /**
      * Cria uma sala comercial básica.
      */
-    public SalaComercial criarSalaComercialBasica(Endereco endereco, double area, int andar) {
+    public SalaComercial criarSalaComercialBasica(String endereco, double area, int andar) {
         ImovelFactory factory = new SalaComercialFactory();
         SalaComercial sala = (SalaComercial) factory.criarImovel();
         
