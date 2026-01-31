@@ -50,7 +50,7 @@ public class MyHomeService {
      * Este é um caso de uso completo que coordena vários serviços.
      */
     public Anuncio anunciarCasa(String tituloAnuncio, double preco, String descricao,
-                               String endereco, double area, int quartos, int banheiros,
+                               Endereco endereco, double area, int quartos, int banheiros,
                                String nomeAnunciante, String emailAnunciante, 
                                String telefoneAnunciante, String[] fotos) {
         
@@ -71,7 +71,7 @@ public class MyHomeService {
      * Cria um anúncio completo de apartamento.
      */
     public Anuncio anunciarApartamento(String tituloAnuncio, double preco, String descricao,
-                                      String endereco, double area, int quartos, int banheiros,
+                                      Endereco endereco, double area, int quartos, int banheiros,
                                       int andar, String nomeCorretor, String emailCorretor,
                                       String telefoneCorretor, String[] fotos) {
         
@@ -89,7 +89,7 @@ public class MyHomeService {
      * Cria um anúncio de terreno.
      */
     public Anuncio anunciarTerreno(String tituloAnuncio, double preco,
-                                  String endereco, double area, String zoneamento,
+                                  Endereco endereco, double area, String zoneamento,
                                   String nomeAnunciante, String emailAnunciante,
                                   String telefoneAnunciante) {
         
@@ -160,9 +160,9 @@ public class MyHomeService {
         
         // Criar diferentes tipos de imóveis
         System.out.println("Criando imóveis com Factory Method:");
-        Casa casa = imovelService.criarCasaBasica("Rua das Flores, 123", 120.0);
-        Apartamento ap = imovelService.criarApartamentoBasico("Av. Boa Viagem, 456", 80.0, 5);
-        Terreno terreno = imovelService.criarTerrenoBasico("Rua do Futuro, 789", 300.0, "Residencial");
+        Casa casa = imovelService.criarCasaBasica(new Endereco("Rua das Flores, 123", "Flores", "Goiás", "52000-000"), 120.0);
+        Apartamento ap = imovelService.criarApartamentoBasico(new Endereco("Av. Boa Viagem, 456", "Boa Viagem", "Pernambuco", "51000-000"), 80.0, 5);
+        Terreno terreno = imovelService.criarTerrenoBasico(new Endereco("Rua do Futuro, 789", "Futuro", "São Paulo", "01000-000"), 300.0, "Residencial");
         
         System.out.println("✓ Casa criada: " + casa);
         System.out.println("✓ Apartamento criado: " + ap);
@@ -200,7 +200,7 @@ public class MyHomeService {
             "Apartamento de Alto Padrão com Vista Mar",
             1200000.00,
             "Apartamento luxuoso de 95m², 3 quartos (1 suíte), vista para o mar",
-            "Av. Boa Viagem, 1000 - Boa Viagem",
+            new Endereco("Av. Boa Viagem, 1000", "Boa Viagem", "Pernambuco", "51000-000"),
             95.0,
             3,
             2,
