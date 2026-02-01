@@ -8,7 +8,7 @@ import com.myhome.observer.NotificationObserver;
 import com.myhome.prototype.*;
 import com.myhome.service.*;
 import com.myhome.singleton.ConfigurationManager;
-import com.myhome.strategy.NotificationManager;
+import com.myhome.strategy.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,6 +29,7 @@ public class MyHomeFacade {
     // Dados da aplicação
     private List<Anuncio> meusAnuncios;
     private int contadorAnuncios;
+    private Usuario usuarioAtual; // RF05 - Usuario com canal de notificação configurável
     
     // Inicializa todos os subsistemas
     public MyHomeFacade() {
@@ -42,6 +43,10 @@ public class MyHomeFacade {
         
         this.meusAnuncios = new ArrayList<>();
         this.contadorAnuncios = 0;
+        
+        // RF05 - Criar usuário padrão com canal de notificação padrão
+        this.usuarioAtual = new Usuario("User", "user@gmail.com", "(83) 8888-8888");
+        this.usuarioAtual.setCanalNotificacao(new EmailNotificacao(new EmailService()));
     }
     
     /**
@@ -710,6 +715,22 @@ public class MyHomeFacade {
      * - LogObserver: Registra mudanças em arquivo logs/sistema.log
      * - NotificationObserver: Notifica usuários (quando configurado)
      */
+    
+    /**
+     * RF05 - STRATEGY: Envia notificação usando o canal configurado do usuário
+     * 
+     * O padrão Strategy permite trocar dinamicamente o algoritmo de notificação:
+     * - EmailNotificacao: envia por email
+     * - SMSNotificacao: envia por SMS
+     * - WhatsAppNotificacao: envia por WhatsApp
+     */
+    private void notificarUsuario(String mensagem) {
+        if (usuarioAtual != null && usuarioAtual.getCanalNotificacao() != null) {
+            NotificationManager manager = new NotificationManager();
+            manager.enviarNotificacao(usuarioAtual, mensagem);
+        }
+    }
+    
     private void anexarObserversAosAnuncios() {
         for (Anuncio anuncio : meusAnuncios) {
             // Remover observers antigos (se houver)
@@ -836,11 +857,19 @@ public class MyHomeFacade {
                     System.out.println("✅ Anúncio enviado para MODERAÇÃO");
                     System.out.println("   📝 Observer registrando mudança em logs/sistema.log...");
                     System.out.println("   Próxima etapa: Validação (Chain of Responsibility)");
+                    
+                    // RF05 - STRATEGY: Enviar notificação usando o canal configurado
+                    notificarUsuario("📤 Seu anúncio '" + anuncio.getTitulo() + "' foi enviado para moderação!");
+                    
                     return true;
                 } else if (opcao == 2) {
                     System.out.println("⏸️  Suspendendo anúncio...\n");
                     facade.suspender(anuncio);
                     System.out.println("✅ Anúncio movido para SUSPENSO");
+                    
+                    // RF05 - STRATEGY: Enviar notificação
+                    notificarUsuario("⏸️  Seu anúncio '" + anuncio.getTitulo() + "' foi suspenso.");
+                    
                     return true;
                 }
             } else if (estadoNome.equals("Moderação")) {
@@ -850,16 +879,28 @@ public class MyHomeFacade {
                     facade.aprovar(anuncio);
                     System.out.println("\n✅ Anúncio movido para ATIVO (todas as validações passaram)");
                     System.out.println("   📝 Observer registrando mudança em logs/sistema.log...");
+                    
+                    // RF05 - STRATEGY: Enviar notificação de aprovação
+                    notificarUsuario("✅ Parabéns! Seu anúncio '" + anuncio.getTitulo() + "' foi aprovado e está ATIVO!");
+                    
                     return true;
                 } else if (opcao == 2) {
                     System.out.println("❌ Reprovando anúncio...\n");
                     facade.reprovar(anuncio);
                     System.out.println("✅ Anúncio movido para SUSPENSO");
+                    
+                    // RF05 - STRATEGY: Enviar notificação de rejeição
+                    notificarUsuario("❌ Seu anúncio '" + anuncio.getTitulo() + "' foi reprovado e movido para SUSPENSO.");
+                    
                     return true;
                 } else if (opcao == 3) {
                     System.out.println("⏸️  Suspendendo anúncio...\n");
                     facade.suspender(anuncio);
                     System.out.println("✅ Anúncio movido para SUSPENSO");
+                    
+                    // RF05 - STRATEGY: Enviar notificação
+                    notificarUsuario("⏸️  Seu anúncio '" + anuncio.getTitulo() + "' foi suspenso durante moderação.");
+                    
                     return true;
                 }
             } else if (estadoNome.equals("Ativo")) {
@@ -867,11 +908,19 @@ public class MyHomeFacade {
                     System.out.println("🎉 Marcando anúncio como vendido...\n");
                     facade.vender(anuncio);
                     System.out.println("✅ Anúncio movido para VENDIDO");
+                    
+                    // RF05 - STRATEGY: Enviar notificação de venda
+                    notificarUsuario("🎉 Seu anúncio '" + anuncio.getTitulo() + "' foi marcado como VENDIDO!");
+                    
                     return true;
                 } else if (opcao == 2) {
                     System.out.println("⏸️  Suspendendo anúncio...\n");
                     facade.suspender(anuncio);
                     System.out.println("✅ Anúncio movido para SUSPENSO");
+                    
+                    // RF05 - STRATEGY: Enviar notificação
+                    notificarUsuario("⏸️  Seu anúncio '" + anuncio.getTitulo() + "' foi suspenso.");
+                    
                     return true;
                 }
             } else if (estadoNome.equals("Suspenso")) {
@@ -880,6 +929,10 @@ public class MyHomeFacade {
                     facade.reativar(anuncio);
                     System.out.println("✅ Anúncio enviado para MODERAÇÃO");
                     System.out.println("   Próxima etapa: Validação (Chain of Responsibility)");
+                    
+                    // RF05 - STRATEGY: Enviar notificação
+                    notificarUsuario("🔄 Seu anúncio '" + anuncio.getTitulo() + "' foi reativado e está em MODERAÇÃO!");
+                    
                     return true;
                 }
             }
@@ -905,7 +958,127 @@ public class MyHomeFacade {
      * RF07 - Exibir configurações (Singleton)
      */
     public void exibirConfiguracoes() {
-        System.out.println("╔════════════════════════════════════════╗");
+        Scanner scanner = new Scanner(System.in);
+        boolean voltar = false;
+        
+        while (!voltar) {
+            System.out.println("╔════════════════════════════════════════╗");
+            System.out.println("║         CONFIGURAÇÕES DO SISTEMA       ║");
+            System.out.println("╚════════════════════════════════════════╝\n");
+            
+            ConfigurationManager config = ConfigurationManager.getInstance();
+            
+            System.out.println("📋 Configurações Disponíveis:");
+            System.out.println("─".repeat(40));
+            System.out.println("[1] Configurar Canal de Notificação (RF05)");
+            System.out.println("[2] Informações do Sistema (RF07)");
+            System.out.println("[0] Voltar");
+            System.out.println("─".repeat(40));
+            
+            try {
+                System.out.print("Escolha uma opção: ");
+                int opcao = Integer.parseInt(scanner.nextLine().trim());
+                
+                switch (opcao) {
+                    case 1:
+                        configurarCanalNotificacao(scanner);
+                        break;
+                    case 2:
+                        exibirInformacoesDoSistema();
+                        break;
+                    case 0:
+                        voltar = true;
+                        break;
+                    default:
+                        System.out.println("❌ Opção inválida!");
+                }
+                
+                if (opcao != 0) {
+                    pausar(scanner);
+                }
+            } catch (NumberFormatException e) {
+                System.out.println("❌ Opção inválida! Digite um número.");
+            }
+        }
+    }
+    
+    /**
+     * RF05 - STRATEGY PATTERN: Configurar canal de notificação
+     * Permite ao usuário escolher como quer ser notificado
+     */
+    private void configurarCanalNotificacao(Scanner scanner) {
+        System.out.println("\n╔════════════════════════════════════════╗");
+        System.out.println("║ RF05 - STRATEGY (Canal de Notificação)  ║");
+        System.out.println("╚════════════════════════════════════════╝\n");
+        
+        System.out.println("📢 Escolha o canal de notificação preferido:\n");
+        System.out.println("[1] Email 📧");
+        System.out.println("    → Notificações por email (mais detalhado)");
+        System.out.println("[2] SMS 📱");
+        System.out.println("    → Notificações por SMS (mais rápido)");
+        System.out.println("[3] WhatsApp 💬");
+        System.out.println("    → Notificações por WhatsApp");
+        System.out.println("[0] Cancelar");
+        
+        try {
+            System.out.print("\nEscolha uma opção: ");
+            int opcao = Integer.parseInt(scanner.nextLine().trim());
+            
+            switch (opcao) {
+                case 1:
+                    usuarioAtual.setCanalNotificacao(
+                        new EmailNotificacao(new EmailService())
+                    );
+                    System.out.println("\n✅ Canal alterado para EMAIL");
+                    System.out.println("   Você receberá notificações por: " + usuarioAtual.getEmail());
+                    testarNotificacao("📧 Email: Bem-vindo! Você está recebendo notificações por email.");
+                    break;
+                    
+                case 2:
+                    usuarioAtual.setCanalNotificacao(
+                        new SMSNotificacao(new SMSService())
+                    );
+                    System.out.println("\n✅ Canal alterado para SMS");
+                    System.out.println("   Você receberá notificações por: " + usuarioAtual.getTelefone());
+                    testarNotificacao("📱 SMS: Bem-vindo! Você está recebendo notificações por SMS.");
+                    break;
+                    
+                case 3:
+                    usuarioAtual.setCanalNotificacao(
+                        new WhatsAppNotificacao(new WhatsAppService())
+                    );
+                    System.out.println("\n✅ Canal alterado para WHATSAPP");
+                    System.out.println("   Você receberá notificações por: " + usuarioAtual.getTelefone());
+                    testarNotificacao("💬 WhatsApp: Bem-vindo! Você está recebendo notificações por WhatsApp.");
+                    break;
+                    
+                case 0:
+                    System.out.println("❌ Operação cancelada.");
+                    break;
+                    
+                default:
+                    System.out.println("❌ Opção inválida!");
+            }
+        } catch (NumberFormatException e) {
+            System.out.println("❌ Opção inválida! Digite um número.");
+        }
+    }
+    
+    /**
+     * Testa o canal de notificação configurado
+     */
+    private void testarNotificacao(String mensagem) {
+        System.out.println("\n📤 Enviando notificação de teste...");
+        NotificationManager manager = new NotificationManager();
+        manager.enviarNotificacao(usuarioAtual, mensagem);
+        System.out.println("✅ Notificação enviada com sucesso!");
+    }
+    
+    /**
+     * Exibe informações do sistema (RF07)
+     */
+    private void exibirInformacoesDoSistema() {
+        System.out.println("\n╔════════════════════════════════════════╗");
         System.out.println("║   RF07 - SINGLETON (Configurações)     ║");
         System.out.println("╚════════════════════════════════════════╝\n");
         
@@ -916,8 +1089,19 @@ public class MyHomeFacade {
         System.out.println("Nome: " + config.getProperty("app.name", "MyHome"));
         System.out.println("Versão: " + config.getProperty("app.version", "2.0"));
         System.out.println("Cidade: João Pessoa - Paraíba");
-        System.out.println("Padrões: Factory Method, Builder, Singleton");
         System.out.println("─".repeat(40));
+        
+        System.out.println("\n👤 Dados do Usuário Atual:");
+        System.out.println("─".repeat(40));
+        System.out.println("Nome: " + usuarioAtual.getNome());
+        System.out.println("Email: " + usuarioAtual.getEmail());
+        System.out.println("Telefone: " + usuarioAtual.getTelefone());
+        System.out.println("Canal de Notificação: " + 
+            (usuarioAtual.getCanalNotificacao() != null 
+                ? usuarioAtual.getCanalNotificacao().getClass().getSimpleName().replace("Notificacao", "")
+                : "Não configurado"));
+        System.out.println("─".repeat(40));
+        
         System.out.println("\n💡 ConfigurationManager é um Singleton!");
         System.out.println("   Sempre a mesma instância: " + config.hashCode());
     }
