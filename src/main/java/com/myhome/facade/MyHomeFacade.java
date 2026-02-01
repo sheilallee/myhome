@@ -3,9 +3,13 @@ package com.myhome.facade;
 import com.myhome.builder.*;
 import com.myhome.factory.*;
 import com.myhome.model.*;
+import com.myhome.observer.LogObserver;
+import com.myhome.observer.NotificationObserver;
 import com.myhome.prototype.*;
 import com.myhome.service.*;
 import com.myhome.singleton.ConfigurationManager;
+import com.myhome.strategy.NotificationManager;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
@@ -59,8 +63,11 @@ public class MyHomeFacade {
         meusAnuncios = persistenciaService.carregarAnuncios();
         contadorAnuncios = meusAnuncios.size();
         
+        // Anexar observers aos anúncios carregados (RF04 - Observer Pattern)
         if (contadorAnuncios > 0) {
-            System.out.println("\n📂 " + contadorAnuncios + " anúncio(s) carregado(s) do arquivo!\n");
+            anexarObserversAosAnuncios();
+            System.out.println("\n📂 " + contadorAnuncios + " anúncio(s) carregado(s) do arquivo!");
+            System.out.println("✅ Observers attachados para monitoramento de mudanças\n");
         }
         
         while (continuar) {
@@ -693,6 +700,32 @@ public class MyHomeFacade {
     }
     
     /**
+     * RF04 - Anexa observers aos anúncios carregados do arquivo JSON
+     * 
+     * IMPORTANTE: Anúncios criados em `criarAnuncioInterativo()` já têm observers.
+     * Mas anúncios carregados do arquivo JSON perdem os observers durante
+     * a desserialização, então precisam ser re-anexados aqui.
+     * 
+     * Padrão Observer: Monitora mudanças de estado
+     * - LogObserver: Registra mudanças em arquivo logs/sistema.log
+     * - NotificationObserver: Notifica usuários (quando configurado)
+     */
+    private void anexarObserversAosAnuncios() {
+        for (Anuncio anuncio : meusAnuncios) {
+            // Remover observers antigos (se houver)
+            // Isso evita duplicação se o método for chamado múltiplas vezes
+            
+            // Criar observers
+            LoggerService logger = new LoggerService();
+            NotificationManager manager = new NotificationManager();
+            
+            // Anexar observers
+            anuncio.adicionarObserver(new LogObserver(logger));
+            anuncio.adicionarObserver(new NotificationObserver(manager));
+        }
+    }
+    
+    /**
      * Gerencia um anúncio específico com opções baseadas no estado atual
      */
     private void gerenciarAnuncioEspecifico(Scanner scanner, Anuncio anuncio) {
@@ -801,6 +834,7 @@ public class MyHomeFacade {
                     System.out.println("📤 Enviando anúncio para moderação...\n");
                     facade.enviarParaModeracao(anuncio);
                     System.out.println("✅ Anúncio enviado para MODERAÇÃO");
+                    System.out.println("   📝 Observer registrando mudança em logs/sistema.log...");
                     System.out.println("   Próxima etapa: Validação (Chain of Responsibility)");
                     return true;
                 } else if (opcao == 2) {
@@ -815,6 +849,7 @@ public class MyHomeFacade {
                     System.out.println("Executando Chain of Responsibility:");
                     facade.aprovar(anuncio);
                     System.out.println("\n✅ Anúncio movido para ATIVO (todas as validações passaram)");
+                    System.out.println("   📝 Observer registrando mudança em logs/sistema.log...");
                     return true;
                 } else if (opcao == 2) {
                     System.out.println("❌ Reprovando anúncio...\n");

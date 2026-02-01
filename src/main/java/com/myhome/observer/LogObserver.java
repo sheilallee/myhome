@@ -22,8 +22,11 @@ public class LogObserver implements AnuncioObserver {
             AnuncioState antigo,
             AnuncioState novo) {
 
+        String tituloAnuncio = anuncio.getTitulo() != null ? 
+            anuncio.getTitulo() : "Anúncio";
+        
         logger.info(
-            "[LOG] Anúncio " + anuncio.getId() +
+            "[LOG] Anúncio '" + tituloAnuncio + "'" +
             " mudou de " + antigo.getNome() +
             " para " + novo.getNome()
         );
