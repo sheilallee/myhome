@@ -9,9 +9,6 @@ import com.myhome.builder.ImovelBuilder;
 import com.myhome.controller.UIController;
 import com.myhome.decorator.BuscaFiltro;
 import com.myhome.decorator.BuscaPadrao;
-import com.myhome.decorator.FiltroLocalizacaoDecorator;
-import com.myhome.decorator.FiltroPrecoDecorator;
-import com.myhome.decorator.FiltroTipoImovelDecorator;
 import com.myhome.factory.AnuncioFactory;
 import com.myhome.model.Anuncio;
 import com.myhome.model.Apartamento;
@@ -28,6 +25,7 @@ import com.myhome.service.EmailService;
 import com.myhome.service.ImovelService;
 import com.myhome.service.MenuService;
 import com.myhome.service.PersistenciaService;
+import com.myhome.service.SearchFilterService;
 import com.myhome.service.SMSService;
 import com.myhome.service.UsuarioService;
 import com.myhome.service.ValidadorService;
@@ -191,7 +189,7 @@ public class MyHomeFacade {
     
     /**
      * RF06 - DECORATOR PATTERN: Busca avançada com filtros dinâmicos
-     * Orquestra criação de filtros decorados e executa busca
+     * Delegada a SearchFilterService para orquestração
      */
     public void executarBusca(UIController uiController) {
         // Coletar filtros via UIController
@@ -202,30 +200,12 @@ public class MyHomeFacade {
         String estado = filtros[3];
         String tipo = filtros[4];
         
-        // Orquestrar Decorator Pattern
-        BuscaFiltro busca = new BuscaPadrao(meusAnuncios);
-        
-        if (!precoMin.isEmpty() && !precoMax.isEmpty()) {
-            try {
-                double min = Double.parseDouble(precoMin);
-                double max = Double.parseDouble(precoMax);
-                busca = new FiltroPrecoDecorator(busca, min, max);
-            } catch (NumberFormatException e) {
-                uiController.exibirErro("Preços inválidos, filtro ignorado.");
-            }
-        }
-        
-        if (!cidade.isEmpty() && !estado.isEmpty()) {
-            busca = new FiltroLocalizacaoDecorator(busca, cidade, estado);
-        }
-        
-        if (!tipo.isEmpty()) {
-            busca = new FiltroTipoImovelDecorator(busca, tipo);
-        }
+        // Usar SearchFilterService para aplicar filtros (Decorator Pattern)
+        SearchFilterService searchService = new SearchFilterService(uiController);
+        BuscaFiltro busca = searchService.aplicarFiltros(meusAnuncios, precoMin, precoMax, cidade, estado, tipo);
         
         // Executar busca
-        System.out.println("🔍 Executando busca com filtros...\n");
-        List<Anuncio> resultados = busca.buscar();
+        List<Anuncio> resultados = searchService.executar(busca);
         
         // Exibir resultados
         uiController.exibirResultadoBusca(resultados);

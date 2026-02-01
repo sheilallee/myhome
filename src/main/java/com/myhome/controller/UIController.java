@@ -157,7 +157,7 @@ public class UIController {
         
         // Filtro 3: Tipo de Imóvel
         if (lerConfirmacao("\n🏘️  Filtrar por tipo de imóvel? (S/N): ")) {
-            exibirInfo("Tipos: Casa, Apartamento, Terreno, SalaComercial");
+            exibirInfo("Tipos: Casa, Apartamento, Terreno, Sala Comercial");
             tipo = lerTexto("   Tipo: ").trim();
         }
         
