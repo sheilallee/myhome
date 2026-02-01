@@ -45,9 +45,13 @@ public class ImovelService {
         }
         
         // Dados básicos
-        String endereco = menuService.lerTexto("\n📍 Digite o endereço completo: ");
-        if (!validadorService.validarTextoNaoVazio(endereco)) {
-            menuService.exibirErro("Endereço não pode ser vazio!");
+        //ajustar para endereco do tipo Endereco
+        Endereco endereco = new Endereco(menuService.lerTexto("\n📍 Digite a rua: "),
+                                         menuService.lerTexto("🏠 Digite o número: "),
+                                         menuService.lerTexto("🏙️ Digite a cidade: "),
+                                         menuService.lerTexto("📍 Digite o estado: "));
+        if (!validadorService.validarEndereco(endereco)) {
+            menuService.exibirErro("Endereço inválido!");
             return null;
         }
         
@@ -214,5 +218,78 @@ public class ImovelService {
         sala.setTemBanheiro(true);
         
         return sala;
+    }
+    
+    /**
+     * Customiza um imóvel clonado a partir de protótipo.
+     * Coleta os dados do endereço linha por linha (rua, número, cidade, estado, CEP).
+     * 
+     * @param scanner Scanner para entrada do usuário
+     * @param imovel Imóvel a customizar
+     */
+    public void customizarImovelClonado(Scanner scanner, Imovel imovel) {
+        menuService.exibirPasso("PASSO 2: CUSTOMIZAR IMÓVEL");
+        
+        // Loop para coleta de endereço válido
+        boolean enderecoValido = false;
+        while (!enderecoValido) {
+            // Endereço é OBRIGATÓRIO - coleta linha por linha
+            String rua = menuService.lerTexto("\n📍 Digite a rua: ");
+            if (rua.isEmpty()) {
+                menuService.exibirErro("Rua não pode ser vazia!");
+                continue;
+            }
+            
+            String numero = menuService.lerTexto("🔢 Digite o número: ");
+            if (numero.isEmpty()) {
+                menuService.exibirErro("Número não pode ser vazio!");
+                continue;
+            }
+            
+            String cidade = menuService.lerTexto("🏙️ Digite a cidade: ");
+            if (cidade.isEmpty()) {
+                menuService.exibirErro("Cidade não pode ser vazia!");
+                continue;
+            }
+            
+            String estado = menuService.lerTexto("📍 Digite o estado (sigla - ex: PB): ");
+            if (estado.isEmpty() || estado.length() != 2) {
+                menuService.exibirErro("Estado deve ser uma sigla com 2 caracteres (ex: PB)!");
+                continue;
+            }
+            
+            // Validar endereço
+            Endereco endereco = new Endereco(rua, numero, cidade, estado);
+            if (!validadorService.validarEndereco(endereco)) {
+                menuService.exibirErro("Endereço inválido! Verifique os dados.");
+                continue;
+            }
+            
+            imovel.setEndereco(endereco);
+            System.out.println("✅ Endereço atualizado: " + endereco);
+            enderecoValido = true;
+        }
+        
+        // Oferece customização opcional de área
+        if (menuService.lerConfirmacao("\n🔧 Deseja alterar a área? (s/n): ")) {
+            double novaArea = menuService.lerDecimal("📏 Digite a nova área (m²): ");
+            if (validadorService.validarNumeroPositivo(novaArea)) {
+                imovel.setArea(novaArea);
+                System.out.println("✅ Área alterada para: " + novaArea + "m²");
+            } else {
+                menuService.exibirErro("Área deve ser maior que zero!");
+            }
+        }
+        
+        // Oferece customização opcional de descrição
+        if (menuService.lerConfirmacao("\n🔧 Deseja adicionar descrição? (s/n): ")) {
+            String descricao = menuService.lerTexto("📝 Descrição: ");
+            if (!descricao.isEmpty()) {
+                imovel.setDescricao(descricao);
+                System.out.println("✅ Descrição adicionada");
+            }
+        }
+        
+        System.out.println("\n✅ Customização concluída!");
     }
 }

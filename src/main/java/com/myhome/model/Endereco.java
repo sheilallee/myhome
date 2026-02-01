@@ -2,15 +2,20 @@ package com.myhome.model;
 
 public class Endereco {
     private String rua;
+    private String numero;
     private String cidade;
     private String estado;
-    private String cep;
 
-    public Endereco(String rua, String cidade, String estado, String cep) {
+    public Endereco(String rua, String numero, String cidade, String estado) {
         this.rua = rua;
+        this.numero = numero;
         this.cidade = cidade;
         this.estado = estado;
-        this.cep = cep;
+    }
+
+    public Endereco clone() {
+        Endereco enderecoClone = new Endereco(this.rua, this.numero, this.cidade, this.estado);
+        return enderecoClone;
     }
 
     public String getRua() {
@@ -25,12 +30,12 @@ public class Endereco {
         return estado;
     }
 
-    public String getCep() {
-        return cep;
+    public String getNumero() {
+        return numero;
     }
 
     @Override
     public String toString() {
-        return String.format("%s, %s, %s - CEP: %s", rua, cidade, estado, cep);
+        return String.format("%s, %s - %s/%s", rua, numero, cidade, estado);
     }
 }

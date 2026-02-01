@@ -10,7 +10,7 @@ public class ImovelBuilderImpl implements ImovelBuilder {
     // ========================================
     
     private String tipo;
-    private String endereco;
+    private Endereco endereco;
     private double area;
     private int quartos;
     private int banheiros;
@@ -61,7 +61,7 @@ public class ImovelBuilderImpl implements ImovelBuilder {
     }
     
     @Override
-    public ImovelBuilder setEndereco(String endereco) {
+    public ImovelBuilder setEndereco(Endereco endereco) {
         this.endereco = endereco;
         return this;
     }
@@ -144,7 +144,7 @@ public class ImovelBuilderImpl implements ImovelBuilder {
         if (tipo == null || tipo.isEmpty()) {
             throw new IllegalStateException("Tipo é obrigatório");
         }
-        if (endereco == null || endereco.isEmpty()) {
+        if (endereco == null) {
             throw new IllegalStateException("Endereço é obrigatório");
         }
         if (area <= 0) {

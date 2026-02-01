@@ -1,22 +1,6 @@
 package com.myhome.model;
 
-/**
- * RF01 - PRODUTO CONCRETO (Factory Method Pattern)
- * 
- * Representa um Apartamento no sistema MyHome.
- * 
- * CARACTERÍSTICAS ESPECÍFICAS:
- * - Número de quartos
- * - Número de banheiros
- * - Andar do apartamento
- * - Presença de elevador
- * - Número de vagas de garagem
- */
 public class Apartamento extends Imovel {
-    
-    // ========================================
-    // ATRIBUTOS ESPECÍFICOS DE APARTAMENTO
-    // ========================================
     
     private int quartos;
     private int banheiros;
@@ -24,28 +8,17 @@ public class Apartamento extends Imovel {
     private boolean temElevador;
     private int vagas;
     
-    // ========================================
-    // CONSTRUTORES
-    // ========================================
-    
-    /**
-     * Construtor padrão.
-     * Usado pela ApartamentoFactory.
-     */
     public Apartamento() {
         super();
         this.tipo = "Apartamento";
     }
     
-    /**
-     * Construtor privado para clonagem (Prototype Pattern).
-     */
     private Apartamento(Apartamento original) {
         super();
         this.id = original.id;
         this.tipo = original.tipo;
         this.area = original.area;
-        this.endereco = original.endereco;
+        this.endereco = original.endereco != null ? original.endereco.clone() : null;
         this.descricao = original.descricao;
         this.caracteristicas.putAll(original.caracteristicas);
         
@@ -56,10 +29,6 @@ public class Apartamento extends Imovel {
         this.vagas = original.vagas;
     }
     
-    // ========================================
-    // IMPLEMENTAÇÃO DOS MÉTODOS ABSTRATOS
-    // ========================================
-    
     @Override
     public String getTipo() {
         return this.tipo;
@@ -69,10 +38,6 @@ public class Apartamento extends Imovel {
     public Imovel clonar() {
         return new Apartamento(this);
     }
-    
-    // ========================================
-    // VALIDAÇÃO ESPECÍFICA
-    // ========================================
     
     @Override
     public boolean validar() {
@@ -90,10 +55,6 @@ public class Apartamento extends Imovel {
         
         return true;
     }
-    
-    // ========================================
-    // GETTERS E SETTERS
-    // ========================================
     
     public int getQuartos() {
         return quartos;
