@@ -2,6 +2,7 @@ package com.myhome.builder;
 
 import com.myhome.model.Apartamento;
 import com.myhome.model.Casa;
+import com.myhome.model.Endereco;
 
 // RF01 - Director: define sequências pré-configuradas de construção de imóveis
 public class Director {
@@ -38,7 +39,7 @@ public class Director {
      * @return Casa construída
      */
     public Casa construirCasaSimples(
-            String endereco, 
+            Endereco endereco, 
             double area, 
             int quartos, 
             int banheiros) {
@@ -69,7 +70,7 @@ public class Director {
      * @return Casa completa construída
      */
     public Casa construirCasaCompleta(
-            String endereco,
+            Endereco endereco,
             double area,
             int quartos,
             int banheiros,
@@ -106,7 +107,7 @@ public class Director {
      * @return Apartamento construído
      */
     public Apartamento construirApartamentoCompleto(
-            String endereco,
+            Endereco endereco,
             double area,
             int quartos,
             int banheiros,

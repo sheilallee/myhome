@@ -1,5 +1,6 @@
 package com.myhome.builder;
 
+import com.myhome.model.Endereco;
 import com.myhome.model.Imovel;
 
 // RF01 - Builder: interface para construção fluente de imóveis passo a passo
@@ -9,7 +10,7 @@ public interface ImovelBuilder {
     
     ImovelBuilder setTipo(String tipo);
     
-    ImovelBuilder setEndereco(String endereco);
+    ImovelBuilder setEndereco(Endereco endereco);
     
     ImovelBuilder setArea(double area);
     
