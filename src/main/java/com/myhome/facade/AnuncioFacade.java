@@ -8,22 +8,22 @@ import com.myhome.model.Anuncio;
 public class AnuncioFacade {
 
     public void enviarParaModeracao(Anuncio anuncio) {
-        anuncio.getEstado().enviarParaModeracao(anuncio);
+        anuncio.getEstado().revisar();
     }
 
     public void aprovar(Anuncio anuncio) {
-        anuncio.getEstado().aprovar(anuncio);
+        anuncio.getEstado().aprovar();
     }
 
     public void reprovar(Anuncio anuncio) {
-        anuncio.getEstado().reprovar(anuncio);
+        anuncio.getEstado().revisar();
     }
 
     public void vender(Anuncio anuncio) {
-        anuncio.getEstado().vender(anuncio);
+        anuncio.getEstado().vender();
     }
 
     public void suspender(Anuncio anuncio) {
-        anuncio.getEstado().suspender(anuncio);
+        anuncio.getEstado().suspender();
     }
 }

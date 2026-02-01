@@ -284,8 +284,9 @@ public class MyHomeFacade {
         
         // USAR BUILDER PATTERN (RF01)
         ImovelBuilder builder = new ImovelBuilderImpl();
+        Endereco enderecoObj = new Endereco(endereco, "Cidade", "Estado", "00000-000");
         builder.setTipo(tipo)
-               .setEndereco(endereco)
+               .setEndereco(enderecoObj)
                .setArea(area);
         
         // Atributos específicos por tipo
@@ -546,7 +547,8 @@ public class MyHomeFacade {
             return;
         }
         
-        imovel.setEndereco(endereco);
+        Endereco enderecoObj = new Endereco(endereco, "Cidade", "Estado", "00000-000");
+        imovel.setEndereco(enderecoObj);
         
         // Oferece customização opcional de área
         System.out.print("\n🔧 Deseja alterar a área? (s/n): ");
