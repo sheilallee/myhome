@@ -1,6 +1,7 @@
 package com.myhome.facade;
 
 import com.myhome.builder.*;
+import com.myhome.decorator.*;
 import com.myhome.factory.*;
 import com.myhome.model.*;
 import com.myhome.observer.LogObserver;
@@ -88,7 +89,7 @@ public class MyHomeFacade {
                         exibirSubmenuCriarAnuncio(scanner);
                         break;
                     case 2:
-                        System.out.println("🔍 Funcionalidade 'Buscar imóveis' será implementada em RF06 (Decorator)");
+                        executarBusca(scanner);
                         break;
                     case 3:
                         gerenciarMeusAnuncios(scanner);
@@ -156,6 +157,110 @@ public class MyHomeFacade {
     // ================================================================
     // MÉTODOS INTERATIVOS
     // ================================================================
+    
+    /**
+     * RF06 - DECORATOR PATTERN: Busca avançada com filtros dinâmicos
+     * Permite ao usuário adicionar múltiplos filtros que se "decoram" uns aos outros
+     */
+    private void executarBusca(Scanner scanner) {
+        System.out.println("\n╔════════════════════════════════════════╗");
+        System.out.println("║   RF06 - DECORATOR (Busca Avançada)    ║");
+        System.out.println("╚════════════════════════════════════════╝\n");
+        
+        // Inicia com a busca padrão (todos os anúncios em estado ATIVO)
+        BuscaFiltro busca = new BuscaPadrao(meusAnuncios);
+        
+        System.out.println("📝 Configure os filtros de busca:");
+        System.out.println("   (Pressione Enter para pular um filtro)\n");
+        
+        // Filtro 1: Preço
+        System.out.print("💰 Filtrar por preço? (S/N): ");
+        String filtroPreco = scanner.nextLine().trim().toUpperCase();
+        if (filtroPreco.equals("S")) {
+            try {
+                System.out.print("   Preço mínimo (R$): ");
+                double precoMin = Double.parseDouble(scanner.nextLine().trim());
+                
+                System.out.print("   Preço máximo (R$): ");
+                double precoMax = Double.parseDouble(scanner.nextLine().trim());
+                
+                busca = new FiltroPrecoDecorator(busca, precoMin, precoMax);
+                System.out.println("   ✅ Filtro de preço adicionado\n");
+            } catch (NumberFormatException e) {
+                System.out.println("   ⚠️  Valores inválidos. Filtro ignorado.\n");
+            }
+        }
+        
+        // Filtro 2: Localização
+        System.out.print("🏠 Filtrar por localização? (S/N): ");
+        String filtroLocal = scanner.nextLine().trim().toUpperCase();
+        if (filtroLocal.equals("S")) {
+            System.out.print("   Cidade: ");
+            String cidade = scanner.nextLine().trim();
+            
+            System.out.print("   Estado (ex: PB): ");
+            String estado = scanner.nextLine().trim().toUpperCase();
+            
+            if (!cidade.isEmpty() && !estado.isEmpty()) {
+                busca = new FiltroLocalizacaoDecorator(busca, cidade, estado);
+                System.out.println("   ✅ Filtro de localização adicionado\n");
+            }
+        }
+        
+        // Filtro 3: Tipo de Imóvel
+        System.out.print("🏘️  Filtrar por tipo de imóvel? (S/N): ");
+        String filtroTipo = scanner.nextLine().trim().toUpperCase();
+        if (filtroTipo.equals("S")) {
+            System.out.println("   Tipos disponíveis: Casa, Apartamento, Terreno, SalaComercial");
+            System.out.print("   Tipo: ");
+            String tipo = scanner.nextLine().trim();
+            
+            if (!tipo.isEmpty()) {
+                busca = new FiltroTipoImovelDecorator(busca, tipo);
+                System.out.println("   ✅ Filtro de tipo adicionado\n");
+            }
+        }
+        
+        // Executar busca com todos os filtros decorados
+        System.out.println("🔍 Executando busca com filtros...\n");
+        List<Anuncio> resultados = busca.buscar();
+        
+        // Exibir resultados
+        exibirResultadosBusca(resultados, scanner);
+    }
+    
+    /**
+     * Exibe os resultados da busca de forma formatada
+     */
+    private void exibirResultadosBusca(List<Anuncio> anuncios, Scanner scanner) {
+        System.out.println("╔════════════════════════════════════════╗");
+        System.out.println("║       RESULTADOS DA BUSCA              ║");
+        System.out.println("╚════════════════════════════════════════╝\n");
+        
+        if (anuncios.isEmpty()) {
+            System.out.println("❌ Nenhum imóvel encontrado com os critérios especificados.");
+            pausar(scanner);
+            return;
+        }
+        
+        System.out.println("✅ " + anuncios.size() + " imóvel(is) encontrado(s):\n");
+        
+        for (int i = 0; i < anuncios.size(); i++) {
+            Anuncio anuncio = anuncios.get(i);
+            System.out.println("┌────────────────────────────────────────┐");
+            System.out.println("│ [" + (i + 1) + "] " + anuncio.getTitulo());
+            System.out.println("├────────────────────────────────────────┤");
+            System.out.println("│ 💰 Preço: R$ " + String.format("%,.2f", anuncio.getPreco()));
+            System.out.println("│ 📍 Local: " + anuncio.getImovel().getEndereco().getCidade() + 
+                             " - " + anuncio.getImovel().getEndereco().getEstado());
+            System.out.println("│ 🏠 Tipo: " + anuncio.getImovel().getTipo());
+            System.out.println("│ 📏 Área: " + anuncio.getImovel().getArea() + " m²");
+            System.out.println("│ 📊 Estado: " + anuncio.getEstado().getNome().toUpperCase());
+            System.out.println("└────────────────────────────────────────┘\n");
+        }
+        
+        pausar(scanner);
+    }
     
     /**
      * Submenu para criação de anúncio
