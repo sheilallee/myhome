@@ -54,47 +54,16 @@ public class Anuncio {
     public Anuncio() {
         this.fotos = new ArrayList<>();
         this.dataCriacao = new Date();
-        this.estado = new RascunhoState(); // ESTADO INICIAL
+        this.estado = new RascunhoState(this); // ESTADO INICIAL
 
     }
-
-    // ========================================
-    // MÉTODOS DE NEGÓCIO
-    // ========================================
-
-    public boolean validar() {
-        if (titulo == null || titulo.trim().isEmpty()) {
-            return false;
-        }
-
-        if (preco <= 0) {
-            return false;
-        }
-
-        if (imovel == null) {
-            return false;
-        }
-
-        return imovel.validar();
-    }
-
-    public void adicionarFoto(String urlFoto) {
-        if (urlFoto != null && !urlFoto.trim().isEmpty()) {
-            this.fotos.add(urlFoto);
-        }
-    }
-
-    public boolean removerFoto(String urlFoto) {
-        return this.fotos.remove(urlFoto);
-    }
-
-    public int getQuantidadeFotos() {
-        return this.fotos.size();
-    }
-
     // ========================================
     // STATE + OBSERVER (AJUSTE SOLICITADO)
     // ========================================
+
+    public AnuncioState getEstado() {
+        return estado;
+    }
 
     /**
      * Altera o estado do anúncio e notifica os observadores.
@@ -203,8 +172,8 @@ public class Anuncio {
         this.dataPublicacao = dataPublicacao;
     }
 
-    public AnuncioState getEstado() {
-        return estado;
+    public int getQuantidadeFotos() {
+        return this.fotos.size();
     }
 
     // ========================================

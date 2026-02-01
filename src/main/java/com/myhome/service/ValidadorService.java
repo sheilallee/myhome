@@ -1,5 +1,7 @@
 package com.myhome.service;
 
+import com.myhome.model.Endereco;
+
 /**
  * SERVIÇO DE VALIDAÇÃO E FORMATAÇÃO
  * 
@@ -102,5 +104,51 @@ public class ValidadorService {
      */
     public boolean validarTextoNaoVazio(String texto) {
         return texto != null && !texto.trim().isEmpty();
+    }
+    
+    /**
+     * Valida um objeto Endereco verificando todos os seus campos.
+     * 
+     * Regras:
+     * - Rua não pode ser vazia
+     * - Cidade não pode ser vazia
+     * - Estado deve ter exatamente 2 caracteres (sigla do estado)
+     * - CEP deve estar em formato válido ou estar vazio
+     * 
+     * @param endereco Endereco a ser validado
+     * @return true se válido, false caso contrário
+     */
+    public boolean validarEndereco(Endereco endereco) {
+        if (endereco == null) {
+            return false;
+        }
+        
+        // Validar rua
+        if (!validarTextoNaoVazio(endereco.getRua())) {
+            return false;
+        }
+        
+        // Validar cidade
+        if (!validarTextoNaoVazio(endereco.getCidade())) {
+            return false;
+        }
+        
+        // Validar estado (deve ter exatamente 2 caracteres - sigla)
+        String estado = endereco.getEstado();
+        if (estado == null || estado.trim().length() != 2) {
+            return false;
+        }
+        
+        // Validar CEP: pode estar vazio ou deve estar em formato válido
+        String cep = endereco.getCep();
+        if (cep != null && !cep.isEmpty()) {
+            // Formato: xxxxx-xxx ou xxxxxxxx
+            String regexCep = "^\\d{5}-?\\d{3}$";
+            if (!cep.matches(regexCep)) {
+                return false;
+            }
+        }
+        
+        return true;
     }
 }

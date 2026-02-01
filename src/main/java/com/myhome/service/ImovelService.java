@@ -45,9 +45,13 @@ public class ImovelService {
         }
         
         // Dados básicos
-        String endereco = menuService.lerTexto("\n📍 Digite o endereço completo: ");
-        if (!validadorService.validarTextoNaoVazio(endereco)) {
-            menuService.exibirErro("Endereço não pode ser vazio!");
+        //ajustar para endereco do tipo Endereco
+        Endereco endereco = new Endereco(menuService.lerTexto("\n📍 Digite a rua: "),
+                                         menuService.lerTexto("🏠 Digite o número: "),
+                                         menuService.lerTexto("🏙️ Digite a cidade: "),
+                                         menuService.lerTexto("📍 Digite o estado: "));
+        if (!validadorService.validarEndereco(endereco)) {
+            menuService.exibirErro("Endereço inválido!");
             return null;
         }
         
