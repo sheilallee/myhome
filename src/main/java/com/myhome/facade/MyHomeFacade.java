@@ -490,7 +490,7 @@ public class MyHomeFacade {
             System.out.println("   (objeto independente pronto para customização)\n");
             
             // PASSO 3: CUSTOMIZAR o imóvel clonado
-            customizarImovelClonado(scanner, imovel);
+            imovelService.customizarImovelClonado(scanner, imovel);
             
             // PASSO 4: VALIDAR antes de prosseguir
             if (!imovel.validar()) {
@@ -524,61 +524,6 @@ public class MyHomeFacade {
         } catch (Exception e) {
             System.out.println("\n❌ Erro ao criar anúncio de protótipo: " + e.getMessage() + "\n");
         }
-    }
-    
-    /**
-     * Customiza um imóvel clonado a partir de protótipo.
-     * 
-     * @param scanner Scanner para entrada do usuário
-     * @param imovel Imóvel a customizar
-     */
-    private void customizarImovelClonado(Scanner scanner, Imovel imovel) {
-        System.out.println("\n┌────────────────────────────────────────┐");
-        System.out.println("│  PASSO 2: CUSTOMIZAR IMÓVEL            │");
-        System.out.println("└────────────────────────────────────────┘\n");
-        
-        // Endereço é OBRIGATÓRIO
-        System.out.print("📍 Endereço (obrigatório): ");
-        String endereco = scanner.nextLine().trim();
-        
-        if (endereco.isEmpty()) {
-            System.out.println("❌ Endereço não pode ser vazio!");
-            customizarImovelClonado(scanner, imovel);
-            return;
-        }
-        
-        Endereco enderecoObj = new Endereco(endereco, "Cidade", "Estado", "00000-000");
-        imovel.setEndereco(enderecoObj);
-        
-        // Oferece customização opcional de área
-        System.out.print("\n🔧 Deseja alterar a área? (s/n): ");
-        if (scanner.nextLine().trim().equalsIgnoreCase("s")) {
-            System.out.print("📏 Digite a nova área (m²): ");
-            try {
-                double novaArea = Double.parseDouble(scanner.nextLine().trim());
-                if (novaArea > 0) {
-                    imovel.setArea(novaArea);
-                    System.out.println("✅ Área alterada para: " + novaArea + "m²");
-                } else {
-                    System.out.println("❌ Área deve ser maior que zero!");
-                }
-            } catch (NumberFormatException e) {
-                System.out.println("❌ Valor inválido!");
-            }
-        }
-        
-        // Oferece customização opcional de descrição
-        System.out.print("\n🔧 Deseja adicionar descrição? (s/n): ");
-        if (scanner.nextLine().trim().equalsIgnoreCase("s")) {
-            System.out.print("📝 Descrição: ");
-            String descricao = scanner.nextLine().trim();
-            if (!descricao.isEmpty()) {
-                imovel.setDescricao(descricao);
-                System.out.println("✅ Descrição adicionada");
-            }
-        }
-        
-        System.out.println("\n✅ Customização concluída!");
     }
     
     /**

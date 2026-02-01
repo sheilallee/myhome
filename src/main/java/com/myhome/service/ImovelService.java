@@ -219,4 +219,60 @@ public class ImovelService {
         
         return sala;
     }
+    
+    /**
+     * Customiza um imóvel clonado a partir de protótipo.
+     * Coleta os dados do endereço linha por linha (rua, número, cidade, estado, CEP).
+     * 
+     * @param scanner Scanner para entrada do usuário
+     * @param imovel Imóvel a customizar
+     */
+    public void customizarImovelClonado(Scanner scanner, Imovel imovel) {
+        menuService.exibirPasso("PASSO 2: CUSTOMIZAR IMÓVEL");
+        
+        // Endereço é OBRIGATÓRIO - coleta linha por linha
+        String rua = menuService.lerTexto("\n📍 Digite a rua e número: ");
+        if (rua.isEmpty()) {
+            menuService.exibirErro("Rua não pode ser vazia!");
+            customizarImovelClonado(scanner, imovel);
+            return;
+        }
+        
+        String cidade = menuService.lerTexto("🏙️ Digite a cidade: ");
+        String estado = menuService.lerTexto("📍 Digite o estado: ");
+        String cep = menuService.lerTexto("📮 Digite o CEP: ");
+        
+        // Validar endereço
+        Endereco endereco = new Endereco(rua, cidade, estado, cep);
+        if (!validadorService.validarEndereco(endereco)) {
+            menuService.exibirErro("Endereço inválido!");
+            customizarImovelClonado(scanner, imovel);
+            return;
+        }
+        
+        imovel.setEndereco(endereco);
+        System.out.println("✅ Endereço atualizado: " + endereco);
+        
+        // Oferece customização opcional de área
+        if (menuService.lerConfirmacao("\n🔧 Deseja alterar a área? (s/n): ")) {
+            double novaArea = menuService.lerDecimal("📏 Digite a nova área (m²): ");
+            if (validadorService.validarNumeroPositivo(novaArea)) {
+                imovel.setArea(novaArea);
+                System.out.println("✅ Área alterada para: " + novaArea + "m²");
+            } else {
+                menuService.exibirErro("Área deve ser maior que zero!");
+            }
+        }
+        
+        // Oferece customização opcional de descrição
+        if (menuService.lerConfirmacao("\n🔧 Deseja adicionar descrição? (s/n): ")) {
+            String descricao = menuService.lerTexto("📝 Descrição: ");
+            if (!descricao.isEmpty()) {
+                imovel.setDescricao(descricao);
+                System.out.println("✅ Descrição adicionada");
+            }
+        }
+        
+        System.out.println("\n✅ Customização concluída!");
+    }
 }
