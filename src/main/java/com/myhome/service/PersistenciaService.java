@@ -185,7 +185,7 @@ public class PersistenciaService {
             case "Casa":
                 Casa casa = new Casa();
                 casa.setArea(area);
-                casa.setEndereco(new Endereco(endereco, json, tipo, endereco));
+                casa.setEndereco(new Endereco(endereco, extrairValor(json, "numero"), extrairValor(json, "cidade"), extrairValor(json, "estado")));
                 String quartosStr = extrairValor(json, "quartos");
                 if (!quartosStr.isEmpty()) casa.setQuartos(Integer.parseInt(quartosStr));
                 String banheirosStr = extrairValor(json, "banheiros");
@@ -198,7 +198,7 @@ public class PersistenciaService {
             case "Apartamento":
                 Apartamento apt = new Apartamento();
                 apt.setArea(area);
-                apt.setEndereco(new Endereco(endereco, json, tipo, endereco));
+                apt.setEndereco(new Endereco(endereco, extrairValor(json, "numero"), extrairValor(json, "cidade"), extrairValor(json, "estado")));
                 String quartosAptStr = extrairValor(json, "quartos");
                 if (!quartosAptStr.isEmpty()) apt.setQuartos(Integer.parseInt(quartosAptStr));
                 String banheirosAptStr = extrairValor(json, "banheiros");
@@ -213,14 +213,14 @@ public class PersistenciaService {
             case "Terreno":
                 Terreno terreno = new Terreno();
                 terreno.setArea(area);
-                terreno.setEndereco(new Endereco(endereco, json, tipo, endereco));
+                terreno.setEndereco(new Endereco(endereco, extrairValor(json, "numero"), extrairValor(json, "cidade"), extrairValor(json, "estado")));
                 imovel = terreno;
                 break;
                 
             case "Sala Comercial":
                 SalaComercial sala = new SalaComercial();
                 sala.setArea(area);
-                sala.setEndereco(new Endereco(endereco, json, tipo, endereco));
+                sala.setEndereco(new Endereco(endereco, extrairValor(json, "numero"), extrairValor(json, "cidade"), extrairValor(json, "estado")));
                 String andarSalaStr = extrairValor(json, "andar");
                 if (!andarSalaStr.isEmpty()) sala.setAndar(Integer.parseInt(andarSalaStr));
                 sala.setTemBanheiro(extrairValor(json, "temBanheiro").equals("true"));

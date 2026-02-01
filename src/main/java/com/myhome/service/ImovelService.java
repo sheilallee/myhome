@@ -230,28 +230,45 @@ public class ImovelService {
     public void customizarImovelClonado(Scanner scanner, Imovel imovel) {
         menuService.exibirPasso("PASSO 2: CUSTOMIZAR IMÓVEL");
         
-        // Endereço é OBRIGATÓRIO - coleta linha por linha
-        String rua = menuService.lerTexto("\n📍 Digite a rua e número: ");
-        if (rua.isEmpty()) {
-            menuService.exibirErro("Rua não pode ser vazia!");
-            customizarImovelClonado(scanner, imovel);
-            return;
+        // Loop para coleta de endereço válido
+        boolean enderecoValido = false;
+        while (!enderecoValido) {
+            // Endereço é OBRIGATÓRIO - coleta linha por linha
+            String rua = menuService.lerTexto("\n📍 Digite a rua: ");
+            if (rua.isEmpty()) {
+                menuService.exibirErro("Rua não pode ser vazia!");
+                continue;
+            }
+            
+            String numero = menuService.lerTexto("🔢 Digite o número: ");
+            if (numero.isEmpty()) {
+                menuService.exibirErro("Número não pode ser vazio!");
+                continue;
+            }
+            
+            String cidade = menuService.lerTexto("🏙️ Digite a cidade: ");
+            if (cidade.isEmpty()) {
+                menuService.exibirErro("Cidade não pode ser vazia!");
+                continue;
+            }
+            
+            String estado = menuService.lerTexto("📍 Digite o estado (sigla - ex: PB): ");
+            if (estado.isEmpty() || estado.length() != 2) {
+                menuService.exibirErro("Estado deve ser uma sigla com 2 caracteres (ex: PB)!");
+                continue;
+            }
+            
+            // Validar endereço
+            Endereco endereco = new Endereco(rua, numero, cidade, estado);
+            if (!validadorService.validarEndereco(endereco)) {
+                menuService.exibirErro("Endereço inválido! Verifique os dados.");
+                continue;
+            }
+            
+            imovel.setEndereco(endereco);
+            System.out.println("✅ Endereço atualizado: " + endereco);
+            enderecoValido = true;
         }
-        
-        String cidade = menuService.lerTexto("🏙️ Digite a cidade: ");
-        String estado = menuService.lerTexto("📍 Digite o estado: ");
-        String cep = menuService.lerTexto("📮 Digite o CEP: ");
-        
-        // Validar endereço
-        Endereco endereco = new Endereco(rua, cidade, estado, cep);
-        if (!validadorService.validarEndereco(endereco)) {
-            menuService.exibirErro("Endereço inválido!");
-            customizarImovelClonado(scanner, imovel);
-            return;
-        }
-        
-        imovel.setEndereco(endereco);
-        System.out.println("✅ Endereço atualizado: " + endereco);
         
         // Oferece customização opcional de área
         if (menuService.lerConfirmacao("\n🔧 Deseja alterar a área? (s/n): ")) {

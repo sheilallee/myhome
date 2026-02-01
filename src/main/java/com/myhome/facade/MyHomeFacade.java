@@ -284,7 +284,13 @@ public class MyHomeFacade {
         
         // USAR BUILDER PATTERN (RF01)
         ImovelBuilder builder = new ImovelBuilderImpl();
-        Endereco enderecoObj = new Endereco(endereco, "Cidade", "Estado", "00000-000");
+        System.out.print("🔢 Digite o número: ");
+        String numero = scanner.nextLine().trim();
+        System.out.print("🏙️ Digite a cidade: ");
+        String cidade = scanner.nextLine().trim();
+        System.out.print("📍 Digite o estado: ");
+        String estado = scanner.nextLine().trim();
+        Endereco enderecoObj = new Endereco(endereco, numero, cidade, estado);
         builder.setTipo(tipo)
                .setEndereco(enderecoObj)
                .setArea(area);

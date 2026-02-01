@@ -111,9 +111,9 @@ public class ValidadorService {
      * 
      * Regras:
      * - Rua não pode ser vazia
+     * - Número não pode ser vazio
      * - Cidade não pode ser vazia
      * - Estado deve ter exatamente 2 caracteres (sigla do estado)
-     * - CEP deve estar em formato válido ou estar vazio
      * 
      * @param endereco Endereco a ser validado
      * @return true se válido, false caso contrário
@@ -128,6 +128,11 @@ public class ValidadorService {
             return false;
         }
         
+        // Validar número
+        if (!validarTextoNaoVazio(endereco.getNumero())) {
+            return false;
+        }
+        
         // Validar cidade
         if (!validarTextoNaoVazio(endereco.getCidade())) {
             return false;
@@ -137,16 +142,6 @@ public class ValidadorService {
         String estado = endereco.getEstado();
         if (estado == null || estado.trim().length() != 2) {
             return false;
-        }
-        
-        // Validar CEP: pode estar vazio ou deve estar em formato válido
-        String cep = endereco.getCep();
-        if (cep != null && !cep.isEmpty()) {
-            // Formato: xxxxx-xxx ou xxxxxxxx
-            String regexCep = "^\\d{5}-?\\d{3}$";
-            if (!cep.matches(regexCep)) {
-                return false;
-            }
         }
         
         return true;
