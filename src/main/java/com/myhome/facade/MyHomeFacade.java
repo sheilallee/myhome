@@ -1,20 +1,47 @@
 package com.myhome.facade;
 
-import com.myhome.builder.*;
-import com.myhome.decorator.*;
-import com.myhome.factory.*;
-import com.myhome.model.*;
-import com.myhome.observer.LogObserver;
-import com.myhome.observer.NotificationObserver;
-import com.myhome.prototype.*;
-import com.myhome.service.*;
-import com.myhome.singleton.ConfigurationManager;
-import com.myhome.strategy.*;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 import java.util.Set;
+
+import com.myhome.builder.ImovelBuilder;
+import com.myhome.builder.ImovelBuilderImpl;
+import com.myhome.decorator.BuscaFiltro;
+import com.myhome.decorator.BuscaPadrao;
+import com.myhome.decorator.FiltroLocalizacaoDecorator;
+import com.myhome.decorator.FiltroPrecoDecorator;
+import com.myhome.decorator.FiltroTipoImovelDecorator;
+import com.myhome.factory.AluguelFactory;
+import com.myhome.factory.AnuncioFactory;
+import com.myhome.factory.TemporadaFactory;
+import com.myhome.factory.VendaFactory;
+import com.myhome.model.Anuncio;
+import com.myhome.model.Apartamento;
+import com.myhome.model.Casa;
+import com.myhome.model.Endereco;
+import com.myhome.model.Imovel;
+import com.myhome.model.SalaComercial;
+import com.myhome.model.Terreno;
+import com.myhome.model.Usuario;
+import com.myhome.observer.LogObserver;
+import com.myhome.observer.NotificationObserver;
+import com.myhome.prototype.PrototypeRegistry;
+import com.myhome.service.AnuncioService;
+import com.myhome.service.EmailService;
+import com.myhome.service.ImovelService;
+import com.myhome.service.LoggerService;
+import com.myhome.service.MenuService;
+import com.myhome.service.PersistenciaService;
+import com.myhome.service.SMSService;
+import com.myhome.service.UsuarioService;
+import com.myhome.service.ValidadorService;
+import com.myhome.service.WhatsAppService;
+import com.myhome.singleton.ConfigurationManager;
+import com.myhome.strategy.EmailNotificacao;
+import com.myhome.strategy.NotificationManager;
+import com.myhome.strategy.SMSNotificacao;
+import com.myhome.strategy.WhatsAppNotificacao;
 
 // RF08 - Facade: orquestra todos os subsistemas do MyHome
 public class MyHomeFacade {
@@ -46,7 +73,7 @@ public class MyHomeFacade {
         this.contadorAnuncios = 0;
         
         // RF05 - Criar usuário padrão com canal de notificação padrão
-        this.usuarioAtual = new Usuario("User", "user@gmail.com", "(83) 8888-8888");
+        this.usuarioAtual = new Usuario("User", "sheilalee.lima@gmail.com", "(83) 8888-8888");
         this.usuarioAtual.setCanalNotificacao(new EmailNotificacao(new EmailService()));
     }
     
