@@ -61,7 +61,7 @@ public class Anuncio {
     // STATE + OBSERVER (AJUSTE SOLICITADO)
     // ========================================
 
-    public AnuncioState getEstado() {
+    public AnuncioState getState() {
         return estado;
     }
 
@@ -96,12 +96,11 @@ public class Anuncio {
     /**
      * Altera o estado do anúncio e notifica os observadores.
      */
-    public void mudarEstado(AnuncioState novoEstado) {
+    public void setState(AnuncioState novoEstado) {
         AnuncioState estadoAnterior = this.estado;
         this.estado = novoEstado;
         notificarObservers(estadoAnterior, novoEstado);
     }
-
     /**
      * Adiciona um observador ao anúncio.
      */

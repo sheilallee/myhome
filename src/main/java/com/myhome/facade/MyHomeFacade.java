@@ -6,16 +6,13 @@ import java.util.Scanner;
 import java.util.Set;
 
 import com.myhome.builder.ImovelBuilder;
-import com.myhome.builder.ImovelBuilderImpl;
+import com.myhome.controller.UIController;
 import com.myhome.decorator.BuscaFiltro;
 import com.myhome.decorator.BuscaPadrao;
 import com.myhome.decorator.FiltroLocalizacaoDecorator;
 import com.myhome.decorator.FiltroPrecoDecorator;
 import com.myhome.decorator.FiltroTipoImovelDecorator;
-import com.myhome.factory.AluguelFactory;
 import com.myhome.factory.AnuncioFactory;
-import com.myhome.factory.TemporadaFactory;
-import com.myhome.factory.VendaFactory;
 import com.myhome.model.Anuncio;
 import com.myhome.model.Apartamento;
 import com.myhome.model.Casa;
@@ -24,13 +21,11 @@ import com.myhome.model.Imovel;
 import com.myhome.model.SalaComercial;
 import com.myhome.model.Terreno;
 import com.myhome.model.Usuario;
-import com.myhome.observer.LogObserver;
-import com.myhome.observer.NotificationObserver;
+import com.myhome.observer.AnuncioObserver;
 import com.myhome.prototype.PrototypeRegistry;
 import com.myhome.service.AnuncioService;
 import com.myhome.service.EmailService;
 import com.myhome.service.ImovelService;
-import com.myhome.service.LoggerService;
 import com.myhome.service.MenuService;
 import com.myhome.service.PersistenciaService;
 import com.myhome.service.SMSService;
@@ -48,6 +43,7 @@ public class MyHomeFacade {
     
     // Subsistemas (injeção de dependência)
     private final MenuService menuService;
+    private final UIController uiController;
     private final ImovelService imovelService;
     private final AnuncioService anuncioService;
     private final ValidadorService validadorService;
@@ -64,6 +60,7 @@ public class MyHomeFacade {
         // Criar services na ordem correta de dependências
         this.menuService = new MenuService();
         this.validadorService = new ValidadorService();
+        this.uiController = new UIController(menuService, validadorService);
         this.usuarioService = new UsuarioService();
         this.persistenciaService = new PersistenciaService();
         this.imovelService = new ImovelService(menuService, validadorService);
@@ -73,7 +70,7 @@ public class MyHomeFacade {
         this.contadorAnuncios = 0;
         
         // RF05 - Criar usuário padrão com canal de notificação padrão
-        this.usuarioAtual = new Usuario("User", "sheilalee.lima@gmail.com", "(83) 8888-8888");
+        this.usuarioAtual = new Usuario("User", "jayradpro@gmail.com", "(83) 8888-8888");
         this.usuarioAtual.setCanalNotificacao(new EmailNotificacao(new EmailService()));
     }
     
@@ -89,7 +86,7 @@ public class MyHomeFacade {
      * 0. Sair
      */
     public void executar() {
-        Scanner scanner = new Scanner(System.in);
+        Scanner scanner = uiController.getScanner();
         boolean continuar = true;
         
         // Carrega anúncios salvos
@@ -99,27 +96,26 @@ public class MyHomeFacade {
         // Anexar observers aos anúncios carregados (RF04 - Observer Pattern)
         if (contadorAnuncios > 0) {
             anexarObserversAosAnuncios();
-            System.out.println("\n📂 " + contadorAnuncios + " anúncio(s) carregado(s) do arquivo!");
-            System.out.println("✅ Observers attachados para monitoramento de mudanças\n");
+            uiController.exibirInfo(contadorAnuncios + " anúncio(s) carregado(s) do arquivo!");
+            uiController.exibirSucesso("Observers attachados para monitoramento de mudanças");
         }
         
         while (continuar) {
-            exibirMenuPrincipal();
+            uiController.exibirMenuPrincipal();
             
             try {
-                System.out.print("Escolha uma opção: ");
-                int opcao = Integer.parseInt(scanner.nextLine().trim());
+                int opcao = uiController.lerOpcao("Escolha uma opção: ");
                 System.out.println();
                 
                 switch (opcao) {
                     case 1:
-                        exibirSubmenuCriarAnuncio(scanner);
+                        menuCriarAnuncio(scanner);
                         break;
                     case 2:
-                        executarBusca(scanner);
+                        executarBusca(uiController);
                         break;
                     case 3:
-                        gerenciarMeusAnuncios(scanner);
+                        exibirMeusAnuncios(uiController);
                         break;
                     case 4:
                         exibirConfiguracoes();
@@ -129,53 +125,61 @@ public class MyHomeFacade {
                         break;
                     case 0:
                         continuar = false;
-                        exibirMensagemDespedida();
+                        uiController.exibirMensagemDespedida();
                         break;
                     default:
-                        System.out.println("❌ Opção inválida! Tente novamente.");
+                        uiController.exibirErro("Opção inválida! Tente novamente.");
                 }
                 
                 if (continuar && opcao != 0) {
-                    pausar(scanner);
+                    uiController.pausar();
                 }
                 
             } catch (NumberFormatException e) {
-                System.out.println("❌ Entrada inválida! Digite um número.");
-                pausar(scanner);
+                uiController.exibirErro("Entrada inválida! Digite um número.");
+                uiController.pausar();
             } catch (Exception e) {
-                System.out.println("❌ Erro: " + e.getMessage());
-                pausar(scanner);
+                uiController.exibirErro("Erro: " + e.getMessage());
+                uiController.pausar();
             }
         }
         
-        scanner.close();
+        uiController.fechar();
     }
     
-    // ================================================================
-    // MÉTODOS DO MENU
-    // ================================================================
-    
-    private void exibirMenuPrincipal() {
-        System.out.println("\n╔════════════════════════════════════════╗");
-        System.out.println("║      MYHOME - CLASSIFICADOS          ║");
-        System.out.println("║        IMOBILIÁRIOS                   ║");
-        System.out.println("╠════════════════════════════════════════╣");
-        System.out.println("║  1. Criar novo anúncio                ║");
-        System.out.println("║  2. Buscar imóveis                    ║");
-        System.out.println("║  3. Meus anúncios                     ║");
-        System.out.println("║  4. Configurações                     ║");
-        System.out.println("║  5. Demonstrar padrões                ║");
-        System.out.println("║  0. Sair                              ║");
-        System.out.println("╚════════════════════════════════════════╝");
+    /**
+     * Menu para criar anúncio: Prototype ou Builder
+     */
+    private void menuCriarAnuncio(Scanner scanner) {
+        boolean voltar = false;
+        
+        while (!voltar) {
+            uiController.exibirSubmenuCriarAnuncio();
+            
+            try {
+                int opcao = uiController.lerOpcao("\n➤ Escolha uma opção: ");
+                
+                switch (opcao) {
+                    case 1:
+                        criarAnuncioDePrototipo(scanner);
+                        voltar = true;
+                        break;
+                    case 2:
+                        criarAnuncioInterativo(scanner);
+                        voltar = true;
+                        break;
+                    case 0:
+                        voltar = true;
+                        break;
+                    default:
+                        uiController.exibirErro("Opção inválida!");
+                }
+            } catch (NumberFormatException e) {
+                uiController.exibirErro("Digite um número válido!");
+            }
+        }
     }
-    
-    private void exibirMensagemDespedida() {
-        System.out.println("\n╔════════════════════════════════════════╗");
-        System.out.println("║        👋 ATÉ LOGO! 👋                ║");
-        System.out.println("║   Obrigado por usar o MyHome!         ║");
-        System.out.println("╚════════════════════════════════════════╝\n");
-    }
-    
+
     private void pausar(Scanner scanner) {
         System.out.println("\n⏸️  Pressione ENTER para continuar...");
         scanner.nextLine();
@@ -187,154 +191,57 @@ public class MyHomeFacade {
     
     /**
      * RF06 - DECORATOR PATTERN: Busca avançada com filtros dinâmicos
-     * Permite ao usuário adicionar múltiplos filtros que se "decoram" uns aos outros
+     * Orquestra criação de filtros decorados e executa busca
      */
-    private void executarBusca(Scanner scanner) {
-        System.out.println("\n╔════════════════════════════════════════╗");
-        System.out.println("║   RF06 - DECORATOR (Busca Avançada)    ║");
-        System.out.println("╚════════════════════════════════════════╝\n");
+    public void executarBusca(UIController uiController) {
+        // Coletar filtros via UIController
+        String[] filtros = uiController.coletarFiltrosBusca();
+        String precoMin = filtros[0];
+        String precoMax = filtros[1];
+        String cidade = filtros[2];
+        String estado = filtros[3];
+        String tipo = filtros[4];
         
-        // Inicia com a busca padrão (todos os anúncios em estado ATIVO)
+        // Orquestrar Decorator Pattern
         BuscaFiltro busca = new BuscaPadrao(meusAnuncios);
         
-        System.out.println("📝 Configure os filtros de busca:");
-        System.out.println("   (Pressione Enter para pular um filtro)\n");
-        
-        // Filtro 1: Preço
-        System.out.print("💰 Filtrar por preço? (S/N): ");
-        String filtroPreco = scanner.nextLine().trim().toUpperCase();
-        if (filtroPreco.equals("S")) {
+        if (!precoMin.isEmpty() && !precoMax.isEmpty()) {
             try {
-                System.out.print("   Preço mínimo (R$): ");
-                double precoMin = Double.parseDouble(scanner.nextLine().trim());
-                
-                System.out.print("   Preço máximo (R$): ");
-                double precoMax = Double.parseDouble(scanner.nextLine().trim());
-                
-                busca = new FiltroPrecoDecorator(busca, precoMin, precoMax);
-                System.out.println("   ✅ Filtro de preço adicionado\n");
+                double min = Double.parseDouble(precoMin);
+                double max = Double.parseDouble(precoMax);
+                busca = new FiltroPrecoDecorator(busca, min, max);
             } catch (NumberFormatException e) {
-                System.out.println("   ⚠️  Valores inválidos. Filtro ignorado.\n");
+                uiController.exibirErro("Preços inválidos, filtro ignorado.");
             }
         }
         
-        // Filtro 2: Localização
-        System.out.print("🏠 Filtrar por localização? (S/N): ");
-        String filtroLocal = scanner.nextLine().trim().toUpperCase();
-        if (filtroLocal.equals("S")) {
-            System.out.print("   Cidade: ");
-            String cidade = scanner.nextLine().trim();
-            
-            System.out.print("   Estado (ex: PB): ");
-            String estado = scanner.nextLine().trim().toUpperCase();
-            
-            if (!cidade.isEmpty() && !estado.isEmpty()) {
-                busca = new FiltroLocalizacaoDecorator(busca, cidade, estado);
-                System.out.println("   ✅ Filtro de localização adicionado\n");
-            }
+        if (!cidade.isEmpty() && !estado.isEmpty()) {
+            busca = new FiltroLocalizacaoDecorator(busca, cidade, estado);
         }
         
-        // Filtro 3: Tipo de Imóvel
-        System.out.print("🏘️  Filtrar por tipo de imóvel? (S/N): ");
-        String filtroTipo = scanner.nextLine().trim().toUpperCase();
-        if (filtroTipo.equals("S")) {
-            System.out.println("   Tipos disponíveis: Casa, Apartamento, Terreno, SalaComercial");
-            System.out.print("   Tipo: ");
-            String tipo = scanner.nextLine().trim();
-            
-            if (!tipo.isEmpty()) {
-                busca = new FiltroTipoImovelDecorator(busca, tipo);
-                System.out.println("   ✅ Filtro de tipo adicionado\n");
-            }
+        if (!tipo.isEmpty()) {
+            busca = new FiltroTipoImovelDecorator(busca, tipo);
         }
         
-        // Executar busca com todos os filtros decorados
+        // Executar busca
         System.out.println("🔍 Executando busca com filtros...\n");
         List<Anuncio> resultados = busca.buscar();
         
         // Exibir resultados
-        exibirResultadosBusca(resultados, scanner);
+        uiController.exibirResultadoBusca(resultados);
     }
     
     /**
-     * Exibe os resultados da busca de forma formatada
+     * RF01 - Exibir meus anúncios criados na sessão
      */
-    private void exibirResultadosBusca(List<Anuncio> anuncios, Scanner scanner) {
-        System.out.println("╔════════════════════════════════════════╗");
-        System.out.println("║       RESULTADOS DA BUSCA              ║");
-        System.out.println("╚════════════════════════════════════════╝\n");
-        
-        if (anuncios.isEmpty()) {
-            System.out.println("❌ Nenhum imóvel encontrado com os critérios especificados.");
-            pausar(scanner);
-            return;
-        }
-        
-        System.out.println("✅ " + anuncios.size() + " imóvel(is) encontrado(s):\n");
-        
-        for (int i = 0; i < anuncios.size(); i++) {
-            Anuncio anuncio = anuncios.get(i);
-            System.out.println("┌────────────────────────────────────────┐");
-            System.out.println("│ [" + (i + 1) + "] " + anuncio.getTitulo());
-            System.out.println("├────────────────────────────────────────┤");
-            System.out.println("│ 💰 Preço: R$ " + String.format("%,.2f", anuncio.getPreco()));
-            System.out.println("│ 📍 Local: " + anuncio.getImovel().getEndereco().getCidade() + 
-                             " - " + anuncio.getImovel().getEndereco().getEstado());
-            System.out.println("│ 🏠 Tipo: " + anuncio.getImovel().getTipo());
-            System.out.println("│ 📏 Área: " + anuncio.getImovel().getArea() + " m²");
-            System.out.println("│ 📊 Estado: " + anuncio.getEstado().getNome().toUpperCase());
-            System.out.println("└────────────────────────────────────────┘\n");
-        }
-        
-        pausar(scanner);
-    }
-    
-    /**
-     * Submenu para criação de anúncio
-     * Opção 1: Usar modelo padrão (Prototype) - RF02
-     * Opção 2: Criar do zero (Builder) - RF01
-     */
-    private void exibirSubmenuCriarAnuncio(Scanner scanner) {
-        boolean voltar = false;
-        
-        while (!voltar) {
-            System.out.println("\n╔════════════════════════════════════════╗");
-            System.out.println("║       CRIAR NOVO ANÚNCIO              ║");
-            System.out.println("╠════════════════════════════════════════╣");
-            System.out.println("║  1. Usar modelo padrão (Prototype)    ║");
-            System.out.println("║  2. Criar do zero (Builder)           ║");
-            System.out.println("║  0. Voltar                            ║");
-            System.out.println("╚════════════════════════════════════════╝");
-            
-            try {
-                System.out.print("Escolha uma opção: ");
-                int opcao = Integer.parseInt(scanner.nextLine().trim());
-                System.out.println();
-                
-                switch (opcao) {
-                    case 1:
-                        criarAnuncioDePrototipo(scanner);
-                        voltar = true; // Volta ao menu principal após criar
-                        break;
-                    case 2:
-                        criarAnuncioInterativo(scanner);
-                        voltar = true; // Volta ao menu principal após criar
-                        break;
-                    case 0:
-                        voltar = true;
-                        break;
-                    default:
-                        System.out.println("❌ Opção inválida! Tente novamente.\n");
-                }
-            } catch (NumberFormatException e) {
-                System.out.println("❌ Digite um número válido!\n");
-            }
-        }
+    public void exibirMeusAnuncios(UIController uiController) {
+        Scanner scanner = uiController.getScanner();
+        gerenciarMeusAnuncios(scanner);
     }
     
     /**
      * RF01 - Criar anúncio de forma interativa
-     * Fluxo: Builder (Imovel) → Factory Method (Anuncio)
+     * Fluxo: ImovelService → AnuncioService → PersistenciaService
      */
     public void criarAnuncioInterativo(Scanner scanner) {
         System.out.println("╔════════════════════════════════════════╗");
@@ -342,8 +249,8 @@ public class MyHomeFacade {
         System.out.println("╚════════════════════════════════════════╝\n");
         
         try {
-            // PASSO 1: BUILDER - Criar Imóvel
-            Imovel imovel = criarImovelComBuilder(scanner);
+            // PASSO 1: Criar Imóvel (delegado a ImovelService)
+            Imovel imovel = imovelService.criarImovelInterativo(scanner);
             
             if (imovel == null) {
                 System.out.println("\n❌ Criação de imóvel cancelada.\n");
@@ -355,8 +262,8 @@ public class MyHomeFacade {
             System.out.println("   Endereço: " + imovel.getEndereco());
             System.out.println("   Área: " + imovel.getArea() + "m²");
             
-            // PASSO 2: FACTORY METHOD - Criar Anúncio
-            Anuncio anuncio = criarAnuncioComFactory(scanner, imovel);
+            // PASSO 2: Criar Anúncio (delegado a AnuncioService)
+            Anuncio anuncio = anuncioService.criarAnuncioInterativo(scanner, imovel);
             
             if (anuncio == null) {
                 System.out.println("\n❌ Criação de anúncio cancelada.\n");
@@ -376,212 +283,6 @@ public class MyHomeFacade {
         } catch (Exception e) {
             System.out.println("\n❌ Erro ao criar anúncio: " + e.getMessage() + "\n");
         }
-    }
-    
-    /**
-     * BUILDER PATTERN - Cria imóvel passo a passo
-     * Usuário digita endereço manualmente (João Pessoa/PB)
-     */
-    private Imovel criarImovelComBuilder(Scanner scanner) {
-        System.out.println("┌────────────────────────────────────────┐");
-        System.out.println("│  PASSO 1: CRIAR IMÓVEL (BUILDER)      │");
-        System.out.println("└────────────────────────────────────────┘\n");
-        
-        // Escolher tipo de imóvel
-        System.out.println("🏘️  Tipo de Imóvel:");
-        System.out.println("  [1] Casa");
-        System.out.println("  [2] Apartamento");
-        System.out.println("  [3] Terreno");
-        System.out.println("  [4] Sala Comercial");
-        System.out.print("➤ Escolha: ");
-        
-        int tipoOpcao = Integer.parseInt(scanner.nextLine().trim());
-        String tipo;
-        
-        switch (tipoOpcao) {
-            case 1: tipo = "casa"; break;
-            case 2: tipo = "apartamento"; break;
-            case 3: tipo = "terreno"; break;
-            case 4: tipo = "sala_comercial"; break;
-            default:
-                System.out.println("❌ Tipo inválido!");
-                return null;
-        }
-        
-        // Digitar endereço (João Pessoa/PB)
-        System.out.print("\n📍 Digite o endereço completo: ");
-        String endereco = scanner.nextLine().trim();
-        
-        if (endereco.isEmpty()) {
-            System.out.println("❌ Endereço não pode ser vazio!");
-            return null;
-        }
-        
-        // Digitar área
-        System.out.print("📏 Digite a área (m²): ");
-        double area = Double.parseDouble(scanner.nextLine().trim());
-        
-        if (area <= 0) {
-            System.out.println("❌ Área deve ser maior que zero!");
-            return null;
-        }
-        
-        // USAR BUILDER PATTERN (RF01)
-        ImovelBuilder builder = new ImovelBuilderImpl();
-        System.out.print("🔢 Digite o número: ");
-        String numero = scanner.nextLine().trim();
-        System.out.print("🏙️ Digite a cidade: ");
-        String cidade = scanner.nextLine().trim();
-        System.out.print("📍 Digite o estado: ");
-        String estado = scanner.nextLine().trim();
-        Endereco enderecoObj = new Endereco(endereco, numero, cidade, estado);
-        builder.setTipo(tipo)
-               .setEndereco(enderecoObj)
-               .setArea(area);
-        
-        // Atributos específicos por tipo
-        if (tipo.equals("casa")) {
-            System.out.print("🛌 Quartos: ");
-            int quartos = Integer.parseInt(scanner.nextLine().trim());
-            
-            System.out.print("🚿 Banheiros: ");
-            int banheiros = Integer.parseInt(scanner.nextLine().trim());
-            
-            System.out.print("🌳 Tem quintal? (s/n): ");
-            boolean temQuintal = scanner.nextLine().trim().equalsIgnoreCase("s");
-            
-            System.out.print("🚗 Tem garagem? (s/n): ");
-            boolean temGaragem = scanner.nextLine().trim().equalsIgnoreCase("s");
-            
-            builder.setQuartos(quartos)
-                   .setBanheiros(banheiros)
-                   .setTemQuintal(temQuintal)
-                   .setTemGaragem(temGaragem);
-                   
-        } else if (tipo.equals("apartamento")) {
-            System.out.print("🛌 Quartos: ");
-            int quartos = Integer.parseInt(scanner.nextLine().trim());
-            
-            System.out.print("🚿 Banheiros: ");
-            int banheiros = Integer.parseInt(scanner.nextLine().trim());
-            
-            System.out.print("🏢 Andar: ");
-            int andar = Integer.parseInt(scanner.nextLine().trim());
-            
-            System.out.print("🅿️  Vagas de garagem: ");
-            int vagas = Integer.parseInt(scanner.nextLine().trim());
-            
-            System.out.print("🛗 Tem elevador? (s/n): ");
-            boolean temElevador = scanner.nextLine().trim().equalsIgnoreCase("s");
-            
-            builder.setQuartos(quartos)
-                   .setBanheiros(banheiros)
-                   .setAndar(andar)
-                   .setVagas(vagas)
-                   .setTemElevador(temElevador);
-                   
-        } else if (tipo.equals("terreno")) {
-            System.out.print("🏭 Zoneamento (residencial/comercial/misto): ");
-            String zoneamento = scanner.nextLine().trim();
-            
-            System.out.print("📊 Topografia (plano/aclive/declive): ");
-            String topografia = scanner.nextLine().trim();
-            
-            builder.setZoneamento(zoneamento)
-                   .setTopografia(topografia);
-                   
-        } else if (tipo.equals("sala_comercial")) {
-            System.out.print("🚻 Tem banheiro? (s/n): ");
-            boolean temBanheiro = scanner.nextLine().trim().equalsIgnoreCase("s");
-            
-            System.out.print("👥 Capacidade de pessoas: ");
-            int capacidade = Integer.parseInt(scanner.nextLine().trim());
-            
-            builder.setTemBanheiro(temBanheiro)
-                   .setCapacidadePessoas(capacidade);
-        }
-        
-        // CONSTRUIR IMÓVEL (Builder Pattern)
-        return builder.build();
-    }
-    
-    /**
-     * FACTORY METHOD PATTERN - Cria anúncio usando Factory
-     */
-    private Anuncio criarAnuncioComFactory(Scanner scanner, Imovel imovel) {
-        System.out.println("\n┌────────────────────────────────────────┐");
-        System.out.println("│  PASSO 2: CRIAR ANÚNCIO (FACTORY)     │");
-        System.out.println("└────────────────────────────────────────┘\n");
-        
-        // Escolher tipo de anúncio
-        System.out.println("🏷️  Tipo de Anúncio:");
-        System.out.println("  [1] Venda");
-        System.out.println("  [2] Aluguel");
-        System.out.println("  [3] Temporada");
-        System.out.print("➤ Escolha: ");
-        
-        int tipoAnuncio = Integer.parseInt(scanner.nextLine().trim());
-        
-        // Dados do anúncio
-        System.out.print("\n📝 Título do anúncio: ");
-        String titulo = scanner.nextLine().trim();
-        
-        System.out.print("💰 Preço (R$): ");
-        double preco = Double.parseDouble(scanner.nextLine().trim());
-        
-        System.out.print("📄 Descrição: ");
-        String descricao = scanner.nextLine().trim();
-        
-        // Dados do anunciante
-        System.out.print("\n👤 Seu nome: ");
-        String nome = scanner.nextLine().trim();
-        
-        // Validação de email
-        String email;
-        while (true) {
-            System.out.print("📧 Seu email: ");
-            email = scanner.nextLine().trim();
-            if (validarEmail(email)) {
-                break;
-            }
-            System.out.println("❌ Email inválido! Use o formato: exemplo@dominio.com");
-        }
-        
-        // Validação de telefone com formatação automática
-        String telefone;
-        while (true) {
-            System.out.print("📱 Seu telefone (apenas números): ");
-            String input = scanner.nextLine().trim();
-            telefone = formatarTelefone(input);
-            if (telefone != null) {
-                System.out.println("✅ Telefone formatado: " + telefone);
-                break;
-            }
-            System.out.println("❌ Telefone inválido! Digite 10 ou 11 dígitos (ex: 83988881111)");
-        }
-        
-        Usuario anunciante = new Usuario(nome, email, telefone);
-        anunciante.setTipo(Usuario.TipoUsuario.PROPRIETARIO);
-        
-        // USAR FACTORY METHOD para criar anúncio (RF01)
-        AnuncioFactory factory;
-        
-        switch (tipoAnuncio) {
-            case 1:
-                factory = new VendaFactory();
-                break;
-            case 2:
-                factory = new AluguelFactory();
-                break;
-            case 3:
-                factory = new TemporadaFactory();
-                break;
-            default:
-                System.out.println("❌ Tipo de anúncio inválido!");
-                return null;
-        }
-        
-        return factory.criarAnuncio(titulo, preco, descricao, imovel, anunciante);
     }
     
     /**
@@ -651,8 +352,8 @@ public class MyHomeFacade {
             
             System.out.println("\n✅ Imóvel validado com sucesso!");
             
-            // PASSO 5: FACTORY METHOD - Criar Anúncio
-            Anuncio anuncio = criarAnuncioComFactory(scanner, imovel);
+            // PASSO 5: Criar Anúncio (delegado a AnuncioService)
+            Anuncio anuncio = anuncioService.criarAnuncioInterativo(scanner, imovel);
             
             if (anuncio == null) {
                 System.out.println("\n❌ Criação de anúncio cancelada.\n");
@@ -776,7 +477,7 @@ public class MyHomeFacade {
             System.out.println("  Nome.......: " + anunciante.getNome());
             System.out.println("  Email......: " + anunciante.getEmail());
             System.out.println("  Telefone...: " + anunciante.getTelefone());
-            System.out.println("  Estado......: " + anuncio.getEstado().getNome().toUpperCase());
+            System.out.println("  Estado......: " + anuncio.getState().getNome().toUpperCase());
             System.out.println("+--------------------------------------------+\n");
         }
     }
@@ -802,11 +503,15 @@ public class MyHomeFacade {
             
             for (int i = 0; i < meusAnuncios.size(); i++) {
                 Anuncio anuncio = meusAnuncios.get(i);
+                Imovel imovel = anuncio.getImovel();
                 System.out.println("┌────────────────────────────────────────┐");
                 System.out.println("│ [" + (i + 1) + "] " + anuncio.getTitulo());
                 System.out.println("├────────────────────────────────────────┤");
                 System.out.println("│ Preço: R$ " + String.format("%,.2f", anuncio.getPreco()));
-                System.out.println("│ Estado: " + anuncio.getEstado().getNome().toUpperCase());
+                //adicionar informações do imóvel: tipo, cidade/estado
+                System.out.println("│ Tipo: " + imovel.getTipo());
+                System.out.println("│ Local: " + imovel.getEndereco().getCidade() + " - " + imovel.getEndereco().getEstado());
+                System.out.println("│ Estado: " + anuncio.getState().getNome().toUpperCase());
                 System.out.println("└────────────────────────────────────────┘");
             }
             
@@ -864,18 +569,8 @@ public class MyHomeFacade {
     }
     
     private void anexarObserversAosAnuncios() {
-        for (Anuncio anuncio : meusAnuncios) {
-            // Remover observers antigos (se houver)
-            // Isso evita duplicação se o método for chamado múltiplas vezes
-            
-            // Criar observers
-            LoggerService logger = new LoggerService();
-            NotificationManager manager = new NotificationManager();
-            
-            // Anexar observers
-            anuncio.adicionarObserver(new LogObserver(logger));
-            anuncio.adicionarObserver(new NotificationObserver(manager));
-        }
+        // Delegado a AnuncioService
+        anuncioService.anexarObserversEmLote(meusAnuncios);
     }
     
     /**
@@ -891,13 +586,13 @@ public class MyHomeFacade {
             
             System.out.println("\n📄 " + anuncio.getTitulo());
             System.out.println("💰 R$ " + String.format("%,.2f", anuncio.getPreco()));
-            System.out.println("📊 Estado atual: " + anuncio.getEstado().getNome().toUpperCase());
+            System.out.println("📊 Estado atual: " + anuncio.getState().getNome().toUpperCase());
             
             System.out.println("\n┌────────────────────────────────────────┐");
             System.out.println("│ AÇÕES DISPONÍVEIS:                     │");
             System.out.println("├────────────────────────────────────────┤");
             
-            String estadoNome = anuncio.getEstado().getNome();
+            String estadoNome = anuncio.getState().getNome();
             
             // Opções baseadas no estado atual
             if (estadoNome.equals("Rascunho")) {
@@ -1314,71 +1009,6 @@ public class MyHomeFacade {
         System.out.println("   ✓ São objetos diferentes (hashcodes distintos)");
         System.out.println("   ✓ Cada clone é independente para customização");
         System.out.println("   └──────────────────┘");
-    }
-    
-    // ================================================================
-    // MÉTODOS DE VALIDAÇÃO
-    // ================================================================
-    
-    /**
-     * Valida formato de email
-     * @param email Email a ser validado
-     * @return true se válido, false caso contrário
-     */
-    private boolean validarEmail(String email) {
-        if (email == null || email.isEmpty()) {
-            return false;
-        }
-        // Regex para validação básica de email
-        String regex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$";
-        return email.matches(regex);
-    }
-    
-    /**
-     * Valida formato de telefone brasileiro: (xx) xxxx-xxxx ou (xx) xxxxx-xxxx
-     * @param telefone Telefone a ser validado
-     * @return true se válido, false caso contrário
-     */
-    private boolean validarTelefone(String telefone) {
-        if (telefone == null || telefone.isEmpty()) {
-            return false;
-        }
-        // Regex para validação: (xx) xxxx-xxxx ou (xx) xxxxx-xxxx
-        String regex = "^\\(\\d{2}\\)\\s\\d{4,5}-\\d{4}$";
-        return telefone.matches(regex);
-    }
-    
-    /**
-     * Formata número de telefone brasileiro automaticamente.
-     * Aceita 10 dígitos: (xx) xxxx-xxxx
-     * Aceita 11 dígitos: (xx) xxxxx-xxxx
-     * @param input String com apenas números
-     * @return Telefone formatado ou null se inválido
-     */
-    private String formatarTelefone(String input) {
-        if (input == null) {
-            return null;
-        }
-        
-        // Remove tudo que não é dígito
-        String numeros = input.replaceAll("[^0-9]", "");
-        
-        // Valida quantidade de dígitos
-        if (numeros.length() == 10) {
-            // Formato: (xx) xxxx-xxxx (telefone fixo)
-            return String.format("(%s) %s-%s", 
-                numeros.substring(0, 2),
-                numeros.substring(2, 6),
-                numeros.substring(6, 10));
-        } else if (numeros.length() == 11) {
-            // Formato: (xx) xxxxx-xxxx (celular com 9 dígitos)
-            return String.format("(%s) %s-%s", 
-                numeros.substring(0, 2),
-                numeros.substring(2, 7),
-                numeros.substring(7, 11));
-        }
-        
-        return null; // Quantidade inválida de dígitos
     }
     
     // ================================================================

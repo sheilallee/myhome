@@ -32,7 +32,7 @@ public class SuspensoState extends AnuncioState {
     @Override
     public void revisar() {
         System.out.println("Anúncio revisado e retornando ao estado Rascunho.");
-        anuncio.mudarEstado(new RascunhoState(this.anuncio));
+        anuncio.setState(new RascunhoState(this.anuncio));
     }
 
 }

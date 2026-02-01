@@ -226,4 +226,28 @@ public class AnuncioService {
         System.out.println("\n💡 Status: RASCUNHO (pronto para publicação)");
         System.out.println("═".repeat(40) + "\n");
     }
+    
+    // =====================================================
+    // GERENCIAMENTO DE OBSERVERS EM LOTE (RF04)
+    // =====================================================
+    
+    /**
+     * Anexa observers a um anúncio individual
+     * Usado para anúncios carregados do arquivo ou criados dinamicamente
+     */
+    public void anexarObserversAAnuncio(Anuncio anuncio) {
+        if (anuncio != null) {
+            configurarObservers(anuncio);
+        }
+    }
+    
+    /**
+     * Anexa observers a uma lista de anúncios
+     * Usado após carregar anúncios persistidos do arquivo JSON
+     */
+    public void anexarObserversEmLote(java.util.List<Anuncio> anuncios) {
+        for (Anuncio anuncio : anuncios) {
+            anexarObserversAAnuncio(anuncio);
+        }
+    }
 }

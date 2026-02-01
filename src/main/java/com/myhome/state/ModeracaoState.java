@@ -17,19 +17,19 @@ public class ModeracaoState extends AnuncioState {
         ModeradorBase validador = new ValidadorPalavras();
         validador.setNext(new ValidadorPreco());
 
-        if (validador.handle(anuncio)) {
+        if (validador.handle(this.anuncio)) {
             System.out.println("Anúncio aprovado na moderação. Movendo para estado Ativo.");
-            anuncio.mudarEstado(new AtivoState(anuncio));
+            this.anuncio.setState(new AtivoState(this.anuncio));
         } else {
             System.out.println("Anúncio reprovado na moderação. Movendo para estado Suspenso.");
-            anuncio.mudarEstado(new SuspensoState(anuncio));
+            this.anuncio.setState(new SuspensoState(this.anuncio));
         }
     }
 
     @Override
     public void suspender() {
         System.out.println("Anúncio suspenso a partir do estado Moderação.");
-        anuncio.mudarEstado(new SuspensoState(this.anuncio));
+        this.anuncio.setState(new SuspensoState(this.anuncio));
     }
 
     @Override
