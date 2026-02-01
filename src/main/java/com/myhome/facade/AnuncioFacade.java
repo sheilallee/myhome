@@ -8,6 +8,10 @@ import com.myhome.model.Anuncio;
 public class AnuncioFacade {
 
     public void enviarParaModeracao(Anuncio anuncio) {
+        anuncio.getEstado().publicar();
+    }
+
+    public void reativar(Anuncio anuncio) {
         anuncio.getEstado().revisar();
     }
 
@@ -16,7 +20,7 @@ public class AnuncioFacade {
     }
 
     public void reprovar(Anuncio anuncio) {
-        anuncio.getEstado().revisar();
+        anuncio.getEstado().suspender();
     }
 
     public void vender(Anuncio anuncio) {

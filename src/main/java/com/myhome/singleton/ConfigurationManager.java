@@ -86,6 +86,28 @@ public class ConfigurationManager {
         }
         return Double.parseDouble(value.trim());
     }
+
+    /**
+     * Retorna o valor de uma propriedade como double com valor padrão.
+     * 
+     * Se a propriedade não for encontrada, retorna o valor padrão.
+     * 
+     * @param key Chave da propriedade
+     * @param defaultValue Valor padrão caso a propriedade não exista
+     * @return Valor convertido para double ou defaultValue
+     */
+    public double getPropertyAsDouble(String key, double defaultValue) {
+        try {
+            String value = getProperty(key);
+            if (value == null || value.trim().isEmpty()) {
+                return defaultValue;
+            }
+            return Double.parseDouble(value.trim());
+        } catch (NumberFormatException e) {
+            System.err.println("⚠️  Erro ao converter propriedade '" + key + "' para double. Usando valor padrão: " + defaultValue);
+            return defaultValue;
+        }
+    }
     
     /**
      * Retorna o valor de uma propriedade como int.

@@ -9,21 +9,32 @@ public class ValidadorPalavras extends ModeradorBase {
     
     public ValidadorPalavras() {
         this.termosProibidos = ConfigurationManager.getInstance().getTermosProibidos();
+        
+        // Log de inicialização
+        if (termosProibidos.isEmpty()) {
+            System.out.println("⚠️  ValidadorPalavras inicializado com lista vazia de termos proibidos");
+        } else {
+            System.out.println("✅ ValidadorPalavras inicializado: " + termosProibidos.size() + " termo(s) proibido(s)");
+        }
     }
 
     @Override
     public boolean handle(Anuncio anuncio) {
-        String descricao = anuncio.getDescricao();
+        System.out.println("🔍 Validando palavras proibidas...");
         
-        // Validar descrição contra lista de termos proibidos
+        String descricao = anuncio.getDescricao();
+        String titulo = anuncio.getTitulo();
+        
+        // Validar descrição e título contra lista de termos proibidos
         for (String termo : termosProibidos) {
-            if (descricao != null && descricao.toLowerCase().contains(termo.toLowerCase())) {
-                System.out.println("Anúncio rejeitado por conter termo proibido: '" + termo + "'");
-                return false; // Rejeita o anúncio imediatamente
+            if ((descricao != null && descricao.toLowerCase().contains(termo.toLowerCase())) ||
+                (titulo != null && titulo.toLowerCase().contains(termo.toLowerCase()))) {
+                System.out.println("   ❌ Rejeitado: contém termo proibido '" + termo + "'");
+                return false;
             }
         }
         
-        // Nenhum termo proibido encontrado, passar para o próximo validador
+        System.out.println("   ✅ Palavras validadas com sucesso!");
         return handleNext(anuncio);
     }
 

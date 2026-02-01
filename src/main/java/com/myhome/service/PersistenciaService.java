@@ -78,7 +78,15 @@ public class PersistenciaService {
             json.append("      \"imovel\": {\n");
             json.append("        \"tipo\": \"").append(imovel.getTipo()).append("\",\n");
             json.append("        \"area\": ").append(imovel.getArea()).append(",\n");
-            json.append("        \"endereco\": \"").append(escaparJson(imovel.getEndereco().toString())).append("\"");
+            
+            // Endereco como objeto estruturado
+            Endereco endereco = imovel.getEndereco();
+            json.append("        \"endereco\": {\n");
+            json.append("          \"rua\": \"").append(escaparJson(endereco.getRua())).append("\",\n");
+            json.append("          \"numero\": \"").append(escaparJson(endereco.getNumero())).append("\",\n");
+            json.append("          \"cidade\": \"").append(escaparJson(endereco.getCidade())).append("\",\n");
+            json.append("          \"estado\": \"").append(escaparJson(endereco.getEstado())).append("\"\n");
+            json.append("        }");
             
             // Adiciona atributos específicos por tipo
             if (imovel instanceof Casa) {
@@ -134,7 +142,7 @@ public class PersistenciaService {
             for (int i = 1; i < blocos.length; i++) {
                 String bloco = "{\"titulo\"" + blocos[i];
                 
-                // Extrai valores
+                // Extrai valores do anúncio
                 String titulo = extrairValor(bloco, "titulo");
                 double preco = Double.parseDouble(extrairValor(bloco, "preco"));
                 String descricao = extrairValor(bloco, "descricao");
@@ -142,10 +150,12 @@ public class PersistenciaService {
                 // Extrai dados do imóvel
                 String tipoImovel = extrairValor(bloco, "tipo");
                 double area = Double.parseDouble(extrairValor(bloco, "area"));
-                String endereco = extrairValor(bloco, "endereco");
+                
+                // IMPORTANTE: Passar string vazia pois o endereço agora é um objeto estruturado
+                String enderecoPlaceholder = "";
                 
                 // Cria imóvel baseado no tipo
-                Imovel imovel = criarImovelDoJson(bloco, tipoImovel, area, endereco);
+                Imovel imovel = criarImovelDoJson(bloco, tipoImovel, area, enderecoPlaceholder);
                 
                 // Extrai dados do anunciante
                 String nomeAnunciante = extrairValor(bloco, "nome");
@@ -170,6 +180,7 @@ public class PersistenciaService {
             
         } catch (Exception e) {
             System.err.println("❌ Erro ao processar JSON: " + e.getMessage());
+            e.printStackTrace();
         }
         
         return anuncios;
@@ -181,11 +192,24 @@ public class PersistenciaService {
     private Imovel criarImovelDoJson(String json, String tipo, double area, String endereco) {
         Imovel imovel = null;
         
+        // Extrai dados do endereco estruturado
+        String rua = extrairValor(json, "rua");
+        String numero = extrairValor(json, "numero");
+        String cidade = extrairValor(json, "cidade");
+        String estado = extrairValor(json, "estado");
+        
+        // Se não encontrou a estrutura de endereco, tenta parse da string (retrocompatibilidade)
+        if (rua.isEmpty() && !endereco.isEmpty()) {
+            rua = endereco;
+        }
+        
+        Endereco enderecoObj = new Endereco(rua, numero, cidade, estado);
+        
         switch (tipo) {
             case "Casa":
                 Casa casa = new Casa();
                 casa.setArea(area);
-                casa.setEndereco(new Endereco(endereco, extrairValor(json, "numero"), extrairValor(json, "cidade"), extrairValor(json, "estado")));
+                casa.setEndereco(enderecoObj);
                 String quartosStr = extrairValor(json, "quartos");
                 if (!quartosStr.isEmpty()) casa.setQuartos(Integer.parseInt(quartosStr));
                 String banheirosStr = extrairValor(json, "banheiros");
@@ -198,7 +222,7 @@ public class PersistenciaService {
             case "Apartamento":
                 Apartamento apt = new Apartamento();
                 apt.setArea(area);
-                apt.setEndereco(new Endereco(endereco, extrairValor(json, "numero"), extrairValor(json, "cidade"), extrairValor(json, "estado")));
+                apt.setEndereco(enderecoObj);
                 String quartosAptStr = extrairValor(json, "quartos");
                 if (!quartosAptStr.isEmpty()) apt.setQuartos(Integer.parseInt(quartosAptStr));
                 String banheirosAptStr = extrairValor(json, "banheiros");
@@ -213,14 +237,14 @@ public class PersistenciaService {
             case "Terreno":
                 Terreno terreno = new Terreno();
                 terreno.setArea(area);
-                terreno.setEndereco(new Endereco(endereco, extrairValor(json, "numero"), extrairValor(json, "cidade"), extrairValor(json, "estado")));
+                terreno.setEndereco(enderecoObj);
                 imovel = terreno;
                 break;
                 
             case "Sala Comercial":
                 SalaComercial sala = new SalaComercial();
                 sala.setArea(area);
-                sala.setEndereco(new Endereco(endereco, extrairValor(json, "numero"), extrairValor(json, "cidade"), extrairValor(json, "estado")));
+                sala.setEndereco(enderecoObj);
                 String andarSalaStr = extrairValor(json, "andar");
                 if (!andarSalaStr.isEmpty()) sala.setAndar(Integer.parseInt(andarSalaStr));
                 sala.setTemBanheiro(extrairValor(json, "temBanheiro").equals("true"));

@@ -79,7 +79,7 @@ public class MyHomeFacade {
                         System.out.println("🔍 Funcionalidade 'Buscar imóveis' será implementada em RF06 (Decorator)");
                         break;
                     case 3:
-                        exibirMeusAnuncios();
+                        gerenciarMeusAnuncios(scanner);
                         break;
                     case 4:
                         exibirConfiguracoes();
@@ -627,11 +627,242 @@ public class MyHomeFacade {
             }
             
             System.out.println();
+            System.out.println();
             System.out.println("  [ANUNCIANTE]");
             System.out.println("  Nome.......: " + anunciante.getNome());
             System.out.println("  Email......: " + anunciante.getEmail());
             System.out.println("  Telefone...: " + anunciante.getTelefone());
+            System.out.println("  Estado......: " + anuncio.getEstado().getNome().toUpperCase());
             System.out.println("+--------------------------------------------+\n");
+        }
+    }
+    
+    /**
+     * RF04 - Gerenciar anúncios com transições de estado
+     * State Pattern + Chain of Responsibility + Observer
+     */
+    private void gerenciarMeusAnuncios(Scanner scanner) {
+        while (true) {
+            System.out.println("\n╔════════════════════════════════════════╗");
+            System.out.println("║       GERENCIAR MEUS ANÚNCIOS         ║");
+            System.out.println("╚════════════════════════════════════════╝\n");
+            
+            if (meusAnuncios.isEmpty()) {
+                System.out.println("📭 Nenhum anúncio criado ainda.");
+                System.out.println("   Use a opção 1 do menu principal para criar seu primeiro anúncio!\n");
+                return;
+            }
+            
+            // Listar anúncios com números
+            System.out.println("📋 Total de anúncios: " + meusAnuncios.size() + "\n");
+            
+            for (int i = 0; i < meusAnuncios.size(); i++) {
+                Anuncio anuncio = meusAnuncios.get(i);
+                System.out.println("┌────────────────────────────────────────┐");
+                System.out.println("│ [" + (i + 1) + "] " + anuncio.getTitulo());
+                System.out.println("├────────────────────────────────────────┤");
+                System.out.println("│ Preço: R$ " + String.format("%,.2f", anuncio.getPreco()));
+                System.out.println("│ Estado: " + anuncio.getEstado().getNome().toUpperCase());
+                System.out.println("└────────────────────────────────────────┘");
+            }
+            
+            System.out.println("\n[0] Voltar ao menu principal");
+            System.out.print("\n➤ Selecione um anúncio (número): ");
+            
+            try {
+                int escolha = Integer.parseInt(scanner.nextLine().trim());
+                
+                if (escolha == 0) {
+                    return;
+                }
+                
+                if (escolha < 1 || escolha > meusAnuncios.size()) {
+                    System.out.println("\n❌ Opção inválida!");
+                    pausar(scanner);
+                    continue;
+                }
+                
+                Anuncio anuncioSelecionado = meusAnuncios.get(escolha - 1);
+                gerenciarAnuncioEspecifico(scanner, anuncioSelecionado);
+                
+            } catch (NumberFormatException e) {
+                System.out.println("\n❌ Digite um número válido!");
+                pausar(scanner);
+            }
+        }
+    }
+    
+    /**
+     * Gerencia um anúncio específico com opções baseadas no estado atual
+     */
+    private void gerenciarAnuncioEspecifico(Scanner scanner, Anuncio anuncio) {
+        AnuncioFacade facade = new AnuncioFacade();
+        
+        while (true) {
+            System.out.println("\n╔════════════════════════════════════════╗");
+            System.out.println("║       GERENCIAR ANÚNCIO                ║");
+            System.out.println("╚════════════════════════════════════════╝");
+            
+            System.out.println("\n📄 " + anuncio.getTitulo());
+            System.out.println("💰 R$ " + String.format("%,.2f", anuncio.getPreco()));
+            System.out.println("📊 Estado atual: " + anuncio.getEstado().getNome().toUpperCase());
+            
+            System.out.println("\n┌────────────────────────────────────────┐");
+            System.out.println("│ AÇÕES DISPONÍVEIS:                     │");
+            System.out.println("├────────────────────────────────────────┤");
+            
+            String estadoNome = anuncio.getEstado().getNome();
+            
+            // Opções baseadas no estado atual
+            if (estadoNome.equals("Rascunho")) {
+                System.out.println("│ [1] Enviar para Moderação              │");
+                System.out.println("│ [2] Suspender Anúncio                  │");
+            } else if (estadoNome.equals("Moderação")) {
+                System.out.println("│ [1] Aprovar Anúncio                    │");
+                System.out.println("│ [2] Reprovar Anúncio                   │");
+                System.out.println("│ [3] Suspender Anúncio                  │");
+            } else if (estadoNome.equals("Ativo")) {
+                System.out.println("│ [1] Marcar como Vendido                │");
+                System.out.println("│ [2] Suspender Anúncio                  │");
+            } else if (estadoNome.equals("Suspenso")) {
+                System.out.println("│ [1] Reativar (enviar para Moderação)   │");
+            } else if (estadoNome.equals("Vendido")) {
+                System.out.println("│ (Nenhuma ação disponível)              │");
+            }
+            
+            System.out.println("│ [0] Voltar                             │");
+            System.out.println("└────────────────────────────────────────┘");
+            
+            System.out.print("\n➤ Escolha uma ação: ");
+            
+            try {
+                int opcao = Integer.parseInt(scanner.nextLine().trim());
+                
+                if (opcao == 0) {
+                    return;
+                }
+                
+                boolean sucesso = executarAcaoAnuncio(facade, anuncio, opcao, estadoNome);
+                
+                if (sucesso) {
+                    // Salvar mudanças após transição bem-sucedida
+                    persistenciaService.salvarAnuncios(meusAnuncios);
+                    System.out.println("\n✅ Ação executada com sucesso!");
+                    pausar(scanner);
+                } else {
+                    pausar(scanner);
+                }
+                
+            } catch (NumberFormatException e) {
+                System.out.println("\n❌ Digite um número válido!");
+                pausar(scanner);
+            } catch (IllegalStateException e) {
+                System.out.println("\n⚠️  Erro: " + e.getMessage());
+                pausar(scanner);
+            }
+        }
+    }
+    
+    /**
+     * Executa ação baseada no estado atual e opção escolhida
+     * 
+     * RF04 - State Pattern: Gerencia transições entre estados
+     * O padrão State valida automaticamente as transições permitidas
+     * e lança exceções quando uma transição é inválida.
+     */
+    private boolean executarAcaoAnuncio(AnuncioFacade facade, Anuncio anuncio, int opcao, String estadoNome) {
+        try {
+            System.out.println("\n" + "═".repeat(42));
+            
+            // Pré-validação: verificar se o imóvel é válido antes de qualquer transição
+            // (necessário apenas para transições que exigem validação)
+            if ((estadoNome.equals("Rascunho") && opcao == 1) || 
+                (estadoNome.equals("Suspenso") && opcao == 1)) {
+                
+                if (!anuncio.getImovel().validar()) {
+                    System.out.println("❌ ERRO DE VALIDAÇÃO DO IMÓVEL:");
+                    System.out.println("   O imóvel não atende aos requisitos mínimos:");
+                    Imovel imovel = anuncio.getImovel();
+                    if (imovel.getArea() <= 0) {
+                        System.out.println("   • Área inválida (deve ser > 0)");
+                    }
+                    if (imovel.getEndereco() == null || 
+                        imovel.getEndereco().getCidade() == null || 
+                        imovel.getEndereco().getCidade().trim().isEmpty()) {
+                        System.out.println("   • Endereço incompleto ou sem cidade");
+                        System.out.println("     (carregado do arquivo JSON - pode estar corrompido)");
+                    }
+                    return false;
+                }
+            }
+            
+            if (estadoNome.equals("Rascunho")) {
+                if (opcao == 1) {
+                    System.out.println("📤 Enviando anúncio para moderação...\n");
+                    facade.enviarParaModeracao(anuncio);
+                    System.out.println("✅ Anúncio enviado para MODERAÇÃO");
+                    System.out.println("   Próxima etapa: Validação (Chain of Responsibility)");
+                    return true;
+                } else if (opcao == 2) {
+                    System.out.println("⏸️  Suspendendo anúncio...\n");
+                    facade.suspender(anuncio);
+                    System.out.println("✅ Anúncio movido para SUSPENSO");
+                    return true;
+                }
+            } else if (estadoNome.equals("Moderação")) {
+                if (opcao == 1) {
+                    System.out.println("✅ Aprovando anúncio...\n");
+                    System.out.println("Executando Chain of Responsibility:");
+                    facade.aprovar(anuncio);
+                    System.out.println("\n✅ Anúncio movido para ATIVO (todas as validações passaram)");
+                    return true;
+                } else if (opcao == 2) {
+                    System.out.println("❌ Reprovando anúncio...\n");
+                    facade.reprovar(anuncio);
+                    System.out.println("✅ Anúncio movido para SUSPENSO");
+                    return true;
+                } else if (opcao == 3) {
+                    System.out.println("⏸️  Suspendendo anúncio...\n");
+                    facade.suspender(anuncio);
+                    System.out.println("✅ Anúncio movido para SUSPENSO");
+                    return true;
+                }
+            } else if (estadoNome.equals("Ativo")) {
+                if (opcao == 1) {
+                    System.out.println("🎉 Marcando anúncio como vendido...\n");
+                    facade.vender(anuncio);
+                    System.out.println("✅ Anúncio movido para VENDIDO");
+                    return true;
+                } else if (opcao == 2) {
+                    System.out.println("⏸️  Suspendendo anúncio...\n");
+                    facade.suspender(anuncio);
+                    System.out.println("✅ Anúncio movido para SUSPENSO");
+                    return true;
+                }
+            } else if (estadoNome.equals("Suspenso")) {
+                if (opcao == 1) {
+                    System.out.println("🔄 Reativando anúncio...\n");
+                    facade.reativar(anuncio);
+                    System.out.println("✅ Anúncio enviado para MODERAÇÃO");
+                    System.out.println("   Próxima etapa: Validação (Chain of Responsibility)");
+                    return true;
+                }
+            }
+            
+            System.out.println("❌ Opção inválida para o estado atual!");
+            return false;
+            
+        } catch (IllegalStateException e) {
+            System.out.println("\n⚠️  ERRO DE TRANSIÇÃO DE ESTADO (State Pattern):");
+            System.out.println("   " + e.getMessage());
+            System.out.println("\n💡 Motivo: O padrão State não permite esta transição");
+            System.out.println("   a partir do estado atual.");
+            return false;
+        } catch (Exception e) {
+            System.out.println("\n❌ ERRO INESPERADO:");
+            System.out.println("   " + e.getMessage());
+            e.printStackTrace();
+            return false;
         }
     }
     
