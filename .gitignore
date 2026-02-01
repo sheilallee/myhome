@@ -3,6 +3,8 @@
 bin/
 target/
 build/
+data/
+logs/
 
 # Log files
 *.log
