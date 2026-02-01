@@ -96,7 +96,7 @@ public class UsuarioService {
      */
     public void configurarCanalSMS(Usuario usuario) {
         usuario.setCanalNotificacao(
-            new SMSNotificacao()
+            new SMSNotificacao(new SMSService())
         );
     }
 
@@ -105,7 +105,7 @@ public class UsuarioService {
      */
     public void configurarCanalWhatsApp(Usuario usuario) {
         usuario.setCanalNotificacao(
-            new WhatsAppNotificacao()
+            new WhatsAppNotificacao(new WhatsAppService())
         );
     }
 }
