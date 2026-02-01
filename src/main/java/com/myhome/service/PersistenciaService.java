@@ -73,6 +73,7 @@ public class PersistenciaService {
             json.append("      \"titulo\": \"").append(escaparJson(anuncio.getTitulo())).append("\",\n");
             json.append("      \"preco\": ").append(anuncio.getPreco()).append(",\n");
             json.append("      \"descricao\": \"").append(escaparJson(anuncio.getDescricao())).append("\",\n");
+            json.append("      \"estado\": \"").append(escaparJson(anuncio.getEstado().getNome())).append("\",\n");
             
             // Imovel
             json.append("      \"imovel\": {\n");
@@ -101,6 +102,9 @@ public class PersistenciaService {
                 json.append(",\n        \"banheiros\": ").append(apt.getBanheiros());
                 json.append(",\n        \"andar\": ").append(apt.getAndar());
                 json.append(",\n        \"vagas\": ").append(apt.getVagas());
+            } else if (imovel instanceof Terreno) {
+                Terreno terreno = (Terreno) imovel;
+                json.append(",\n        \"zoneamento\": \"").append(escaparJson(terreno.getZoneamento())).append("\"");
             } else if (imovel instanceof SalaComercial) {
                 SalaComercial sala = (SalaComercial) imovel;
                 json.append(",\n        \"andar\": ").append(sala.getAndar());
@@ -175,6 +179,12 @@ public class PersistenciaService {
                 anuncio.setImovel(imovel);
                 anuncio.setAnunciante(anunciante);
                 
+                // Restaurar estado salvo no JSON
+                String estadoNome = extrairValor(bloco, "estado");
+                if (!estadoNome.isEmpty()) {
+                    anuncio.restaurarEstado(estadoNome);
+                }
+                
                 anuncios.add(anuncio);
             }
             
@@ -238,6 +248,11 @@ public class PersistenciaService {
                 Terreno terreno = new Terreno();
                 terreno.setArea(area);
                 terreno.setEndereco(enderecoObj);
+                String zoneamento = extrairValor(json, "zoneamento");
+                if (zoneamento.isEmpty()) {
+                    zoneamento = "Urbano"; // Valor padrão
+                }
+                terreno.setZoneamento(zoneamento);
                 imovel = terreno;
                 break;
                 

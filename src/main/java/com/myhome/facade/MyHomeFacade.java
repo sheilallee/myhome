@@ -938,19 +938,30 @@ public class MyHomeFacade {
             if ((estadoNome.equals("Rascunho") && opcao == 1) || 
                 (estadoNome.equals("Suspenso") && opcao == 1)) {
                 
-                if (!anuncio.getImovel().validar()) {
+                boolean isValido = anuncio.getImovel().validar();
+                
+                if (!isValido) {
                     System.out.println("❌ ERRO DE VALIDAÇÃO DO IMÓVEL:");
                     System.out.println("   O imóvel não atende aos requisitos mínimos:");
                     Imovel imovel = anuncio.getImovel();
+                    
+                    // Verificar cada aspecto
                     if (imovel.getArea() <= 0) {
-                        System.out.println("   • Área inválida (deve ser > 0)");
+                        System.out.println("   ❌ Área inválida: " + imovel.getArea() + " (deve ser > 0)");
+                    } else {
+                        System.out.println("   ✅ Área válida: " + imovel.getArea() + " m²");
                     }
-                    if (imovel.getEndereco() == null || 
-                        imovel.getEndereco().getCidade() == null || 
-                        imovel.getEndereco().getCidade().trim().isEmpty()) {
-                        System.out.println("   • Endereço incompleto ou sem cidade");
-                        System.out.println("     (carregado do arquivo JSON - pode estar corrompido)");
+                    
+                    if (imovel.getEndereco() == null) {
+                        System.out.println("   ❌ Endereço é nulo");
+                    } else if (imovel.getEndereco().getCidade() == null) {
+                        System.out.println("   ❌ Cidade do endereço é nula");
+                    } else if (imovel.getEndereco().getCidade().trim().isEmpty()) {
+                        System.out.println("   ❌ Cidade do endereço está vazia");
+                    } else {
+                        System.out.println("   ✅ Endereço válido: " + imovel.getEndereco().getCidade());
                     }
+                    
                     return false;
                 }
             }

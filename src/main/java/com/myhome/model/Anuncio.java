@@ -66,6 +66,34 @@ public class Anuncio {
     }
 
     /**
+     * Restaura o estado do anúncio a partir de um nome salvo.
+     * Usado ao carregar anúncios do JSON.
+     */
+    public void restaurarEstado(String estadoNome) {
+        switch (estadoNome.trim().toLowerCase()) {
+            case "rascunho":
+                this.estado = new RascunhoState(this);
+                break;
+            case "moderação":
+                this.estado = new com.myhome.state.ModeracaoState(this);
+                break;
+            case "ativo":
+                this.estado = new com.myhome.state.AtivoState(this);
+                break;
+            case "suspenso":
+                this.estado = new com.myhome.state.SuspensoState(this);
+                break;
+            case "vendido":
+                this.estado = new com.myhome.state.VendidoState(this);
+                break;
+            default:
+                // Se estado desconhecido, volta para Rascunho
+                this.estado = new RascunhoState(this);
+                System.out.println("⚠️  Estado desconhecido '" + estadoNome + "'. Restaurando para Rascunho.");
+        }
+    }
+
+    /**
      * Altera o estado do anúncio e notifica os observadores.
      */
     public void mudarEstado(AnuncioState novoEstado) {
