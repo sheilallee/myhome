@@ -2,6 +2,7 @@ package com.myhome.facade;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
 
@@ -13,6 +14,7 @@ import com.myhome.model.Usuario;
 import com.myhome.prototype.PrototypeRegistry;
 import com.myhome.service.AnuncioService;
 import com.myhome.service.AnuncioManagementService;
+import com.myhome.service.CSVDataLoader;
 import com.myhome.service.EmailService;
 import com.myhome.service.ImovelService;
 import com.myhome.service.MenuService;
@@ -39,8 +41,10 @@ public class MyHomeFacade {
     private final PersistenciaService persistenciaService;
     private final SystemInfoService systemInfoService;
     private final PatternsService patternsService;
+    private final CSVDataLoader csvDataLoader;
 
     private List<Anuncio> meusAnuncios;
+    private List<Usuario> usuariosRegistrados;
     private int contadorAnuncios;
     // RF05 - Strategy: Usuário com canal de notificação configurável
     private Usuario usuarioAtual;
@@ -50,17 +54,15 @@ public class MyHomeFacade {
         this.uiController = new UIController(menuService, validadorService);
         this.usuarioService = new UsuarioService();
         this.persistenciaService = new PersistenciaService();
+        this.csvDataLoader = new CSVDataLoader();
         this.imovelService = new ImovelService(menuService, validadorService);
         this.anuncioService = new AnuncioService(menuService, validadorService, usuarioService);
         this.systemInfoService = new SystemInfoService(uiController);
         this.patternsService = new PatternsService();
         
         this.meusAnuncios = new ArrayList<>();
+        this.usuariosRegistrados = new ArrayList<>();
         this.contadorAnuncios = 0;
-        
-        // RF05 - Strategy: Criar usuário com canal de notificação padrão
-        this.usuarioAtual = new Usuario("User", "jayradpro@gmail.com", "(83) 8888-8888");
-        this.usuarioAtual.setCanalNotificacao(new EmailNotificacao(new EmailService()));
     }
     
     // RF04 - Observer: Monitorar estado dos anúncios
@@ -68,14 +70,39 @@ public class MyHomeFacade {
         Scanner scanner = uiController.getScanner();
         boolean continuar = true;
         
+        // E1 - Carregar seed data do CSV se JSON estiver vazio
         meusAnuncios = persistenciaService.carregarAnuncios();
+        usuariosRegistrados = persistenciaService.carregarUsuarios();
+        
+        if (meusAnuncios.isEmpty()) {
+            // Primeira execução - carregar seed data do CSV
+            Map<String, Object> dadosCSV = csvDataLoader.carregarDadosIniciais();
+            
+            @SuppressWarnings("unchecked")
+            List<Usuario> usuariosCSV = (List<Usuario>) dadosCSV.get("usuarios");
+            @SuppressWarnings("unchecked")
+            List<Anuncio> anunciosCSV = (List<Anuncio>) dadosCSV.get("anuncios");
+            
+            if (!usuariosCSV.isEmpty() && !anunciosCSV.isEmpty()) {
+                usuariosRegistrados.addAll(usuariosCSV);
+                meusAnuncios.addAll(anunciosCSV);
+                
+                // Persistir seed data
+                persistenciaService.salvarUsuarios(usuariosRegistrados);
+                persistenciaService.salvarAnuncios(meusAnuncios);
+            }
+        }
+        
         contadorAnuncios = meusAnuncios.size();
         
         if (contadorAnuncios > 0) {
             anexarObserversAosAnuncios();
-            uiController.exibirInfo(contadorAnuncios + " anúncio(s) carregado(s) do arquivo!");
+            uiController.exibirInfo(contadorAnuncios + " anúncio(s) carregado(s)!");
             uiController.exibirSucesso("Observers attachados para monitoramento de mudanças");
         }
+        
+        // Solicitar login/cadastro do usuário atual
+        usuarioAtual = exibirTelaLogin(scanner);
         
         while (continuar) {
             uiController.exibirMenuPrincipal();
@@ -189,7 +216,7 @@ public class MyHomeFacade {
             
             menuService.exibirSucessoCriacaoImovelInterativo(imovel.getTipo(), imovel.getEndereco().toString(), imovel.getArea());
             
-            Anuncio anuncio = anuncioService.criarAnuncioInterativo(scanner, imovel);
+            Anuncio anuncio = anuncioService.criarAnuncioInterativo(scanner, imovel, usuarioAtual);
             
             if (anuncio == null) {
                 menuService.exibirCancelamentoCriacaoAnuncio();
@@ -250,7 +277,7 @@ public class MyHomeFacade {
             
             menuService.exibirSucessoValidacaoImovel();
             
-            Anuncio anuncio = anuncioService.criarAnuncioInterativo(scanner, imovel);
+            Anuncio anuncio = anuncioService.criarAnuncioInterativo(scanner, imovel, usuarioAtual);
             
             if (anuncio == null) {
                 menuService.exibirCancelamentoCriacaoAnuncio();
@@ -360,8 +387,8 @@ public class MyHomeFacade {
         boolean voltar = false;
         
         while (!voltar) {
-            menuService.exibirCabecalhoConfiguracoes();
-            menuService.exibirOpcoesCofiguracoes();
+            menuService.exibirCabecalho("⚙️  CONFIGURAÇÕES");
+            menuService.exibirMenuConfiguracoes();
             
             try {
                 int opcao = Integer.parseInt(scanner.nextLine().trim());
@@ -371,13 +398,16 @@ public class MyHomeFacade {
                         configurarCanalNotificacao(scanner);
                         break;
                     case 2:
+                        editarPerfilUsuario(scanner);
+                        break;
+                    case 3:
                         exibirInformacoesDoSistema();
                         break;
                     case 0:
                         voltar = true;
                         break;
                     default:
-                        menuService.exibirOpcaoInvalida();
+                        menuService.exibirErro("Opção inválida!");
                 }
                 
                 if (opcao != 0) {
@@ -407,5 +437,194 @@ public class MyHomeFacade {
     // Demonstra todos os padrões GoF implementados
     public void demonstrarPadroesGoF() {
         patternsService.demonstrarTodosPadroes();
+    }
+    
+    // ===================================================================
+    // TELA DE LOGIN E GERENCIAMENTO DE USUÁRIO
+    // ===================================================================
+    
+    /**
+     * Exibe tela de login e permite ao usuário selecionar conta ou criar nova
+     */
+    private Usuario exibirTelaLogin(Scanner scanner) {
+        boolean loginValido = false;
+        Usuario usuarioSelecionado = null;
+        
+        while (!loginValido) {
+            menuService.exibirCabecalho("LOGIN / CADASTRO");
+            menuService.exibirMenuLogin();
+            
+            int opcao = menuService.lerOpcao("Escolha: ");
+            
+            switch (opcao) {
+                case 1:
+                    usuarioSelecionado = selecionarUsuarioExistente();
+                    if (usuarioSelecionado != null) {
+                        loginValido = true;
+                        menuService.exibirSucesso("Bem-vindo, " + usuarioSelecionado.getNome() + "!");
+                        menuService.pausar();
+                    }
+                    break;
+                    
+                case 2:
+                    usuarioSelecionado = criarNovoUsuario(scanner);
+                    if (usuarioSelecionado != null) {
+                        usuariosRegistrados.add(usuarioSelecionado);
+                        persistenciaService.salvarUsuarios(usuariosRegistrados);
+                        loginValido = true;
+                        menuService.exibirSucesso("Conta criada com sucesso!");
+                        menuService.pausar();
+                    }
+                    break;
+                    
+                case 0:
+                    System.exit(0);
+                    break;
+                    
+                default:
+                    menuService.exibirErro("Opção inválida!");
+            }
+        }
+        
+        return usuarioSelecionado;
+    }
+    
+    /**
+     * Permite selecionar um usuário existente
+     */
+    private Usuario selecionarUsuarioExistente() {
+        if (usuariosRegistrados.isEmpty()) {
+            menuService.exibirErro("Nenhuma conta cadastrada!");
+            menuService.pausar();
+            return null;
+        }
+        
+        menuService.exibirCabecalho("SELECIONE SUA CONTA");
+        menuService.exibirListaUsuarios(usuariosRegistrados);
+        
+        int escolha = menuService.lerOpcao("Escolha: ");
+        
+        if (escolha > 0 && escolha <= usuariosRegistrados.size()) {
+            return usuariosRegistrados.get(escolha - 1);
+        }
+        
+        return null;
+    }
+    
+    /**
+     * Permite criar um novo usuário
+     */
+    private Usuario criarNovoUsuario(Scanner scanner) {
+        menuService.exibirCabecalho("CRIAR NOVA CONTA");
+        menuService.exibirFormularioCadastro();
+        
+        String nome = menuService.lerTexto("👤 Nome completo: ");
+        
+        String email;
+        while (true) {
+            email = menuService.lerTexto("📧 Email: ");
+            final String emailTemp = email; // variável final para usar em lambda
+            
+            // Verificar se email já existe
+            if (usuariosRegistrados.stream().anyMatch(u -> u.getEmail().equalsIgnoreCase(emailTemp))) {
+                menuService.exibirErro("Este email já está cadastrado!");
+                continue;
+            }
+            
+            if (validadorService.validarEmail(email)) {
+                break;
+            }
+            menuService.exibirErro("Email inválido! Use o formato: exemplo@dominio.com");
+        }
+        
+        String telefone;
+        while (true) {
+            String input = menuService.lerTexto("📱 Telefone (apenas números): ");
+            telefone = validadorService.formatarTelefone(input);
+            if (telefone != null) {
+                break;
+            }
+            menuService.exibirErro("Telefone inválido! Digite 10 ou 11 dígitos (ex: 83988881111)");
+        }
+        
+        Usuario novoUsuario = new Usuario(nome, email, telefone);
+        novoUsuario.setTipo(Usuario.TipoUsuario.PROPRIETARIO);
+        novoUsuario.setCanalNotificacao(new EmailNotificacao(new EmailService()));
+        
+        return novoUsuario;
+    }
+    
+    /**
+     * Permite editar perfil do usuário (email e telefone)
+     */
+    private void editarPerfilUsuario(Scanner scanner) {
+        menuService.exibirCabecalho("✏️  EDITAR PERFIL");
+        menuService.exibirPerfilUsuario(
+            usuarioAtual.getNome(),
+            usuarioAtual.getEmail(),
+            usuarioAtual.getTelefone()
+        );
+        
+        int opcao = menuService.lerOpcao("Escolha: ");
+        
+        switch (opcao) {
+            case 1:
+                alterarEmail();
+                break;
+            case 2:
+                alterarTelefone();
+                break;
+        }
+    }
+    
+    /**
+     * Altera o email do usuário atual
+     */
+    private void alterarEmail() {
+        menuService.exibirPasso("ALTERAR EMAIL");
+        
+        String novoEmail;
+        while (true) {
+            novoEmail = menuService.lerTexto("\n📧 Novo email: ");
+            final String emailTemp = novoEmail; // variável final para usar em lambda
+            
+            // Verificar se email já existe (excluindo o próprio usuário)
+            if (usuariosRegistrados.stream()
+                    .anyMatch(u -> !u.getEmail().equals(usuarioAtual.getEmail()) && 
+                                 u.getEmail().equalsIgnoreCase(emailTemp))) {
+                menuService.exibirErro("Este email já está cadastrado por outro usuário!");
+                continue;
+            }
+            
+            if (validadorService.validarEmail(novoEmail)) {
+                break;
+            }
+            menuService.exibirErro("Email inválido! Use o formato: exemplo@dominio.com");
+        }
+        
+        usuarioAtual.setEmail(novoEmail);
+        persistenciaService.salvarUsuarios(usuariosRegistrados);
+        menuService.exibirSucesso("Email alterado com sucesso!");
+    }
+    
+    /**
+     * Altera o telefone do usuário atual
+     */
+    private void alterarTelefone() {
+        menuService.exibirPasso("ALTERAR TELEFONE");
+        
+        String novoTelefone;
+        while (true) {
+            String input = menuService.lerTexto("\n📱 Novo telefone (apenas números): ");
+            novoTelefone = validadorService.formatarTelefone(input);
+            if (novoTelefone != null) {
+                break;
+            }
+            menuService.exibirErro("Telefone inválido! Digite 10 ou 11 dígitos (ex: 83988881111)");
+        }
+        
+        usuarioAtual.setTelefone(novoTelefone);
+        persistenciaService.salvarUsuarios(usuariosRegistrados);
+        menuService.exibirSucesso("Telefone alterado com sucesso!");
     }
 }

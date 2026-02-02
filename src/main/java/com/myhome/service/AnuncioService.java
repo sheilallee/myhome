@@ -62,8 +62,13 @@ public class AnuncioService {
     
     /**
      * Cria um anúncio interativo através da linha de comando usando Factory Method.
+     * 
+     * @param scanner Scanner para entrada de dados
+     * @param imovel Imóvel associado ao anúncio
+     * @param anunciante Usuário anunciante (já autenticado na sessão)
+     * @return Anuncio criado ou null se houver erro
      */
-    public Anuncio criarAnuncioInterativo(Scanner scanner, Imovel imovel) {
+    public Anuncio criarAnuncioInterativo(Scanner scanner, Imovel imovel, Usuario anunciante) {
         menuService.exibirPasso("PASSO 2: CRIAR ANÚNCIO (FACTORY)");
         
         // Escolher tipo de anúncio
@@ -86,13 +91,7 @@ public class AnuncioService {
             return null;
         }
         
-        // Criar usuário anunciante
-        Usuario anunciante = criarUsuarioAnunciante(scanner);
-        if (anunciante == null) {
-            return null;
-        }
-        
-        // FACTORY METHOD - Criar anúncio
+        // FACTORY METHOD - Criar anúncio com o usuário da sessão
         AnuncioFactory factory = selecionarFactory(tipoAnuncio);
         if (factory == null) {
             menuService.exibirErro("Tipo de anúncio inválido!");
@@ -103,37 +102,6 @@ public class AnuncioService {
         configurarObservers(anuncio);
         notificarAnuncioCriado(anuncio);
         return anuncio;
-    }
-    
-    /**
-     * Cria o usuário anunciante com validações.
-     */
-    private Usuario criarUsuarioAnunciante(Scanner scanner) {
-        String nome = menuService.lerTexto("\n👤 Seu nome: ");
-        
-        // Validação de email
-        String email;
-        while (true) {
-            email = menuService.lerTexto("📧 Seu email: ");
-            if (validadorService.validarEmail(email)) {
-                break;
-            }
-            menuService.exibirErro("Email inválido! Use o formato: exemplo@dominio.com");
-        }
-        
-        // Validação e formatação de telefone
-        String telefone;
-        while (true) {
-            String input = menuService.lerTexto("📱 Seu telefone (apenas números): ");
-            telefone = validadorService.formatarTelefone(input);
-            if (telefone != null) {
-                menuService.exibirSucesso("Telefone formatado: " + telefone);
-                break;
-            }
-            menuService.exibirErro("Telefone inválido! Digite 10 ou 11 dígitos (ex: 83988881111)");
-        }
-        
-        return usuarioService.criarProprietario(nome, email, telefone);
     }
     
     /**

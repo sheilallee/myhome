@@ -246,10 +246,10 @@ public class UIController {
     }
     
     /**
-     * Exibe lista de "Meus Anúncios".
+     * Exibe lista de "Anúncios".
      */
     public void exibirMeusAnuncios(List<Anuncio> anuncios) {
-        exibirCabecalho("MEUS ANÚNCIOS");
+        exibirCabecalho("ANÚNCIOS");
         
         if (anuncios.isEmpty()) {
             exibirErro("Você ainda não criou nenhum anúncio.");

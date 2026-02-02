@@ -8,6 +8,7 @@ import com.myhome.model.Casa;
 import com.myhome.model.Imovel;
 import com.myhome.model.SalaComercial;
 import com.myhome.model.Terreno;
+import com.myhome.model.Usuario;
 
 /**
  * SERVIÇO DE INTERFACE COM USUÁRIO (UI)
@@ -43,7 +44,7 @@ public class MenuService {
         System.out.println("╠════════════════════════════════════════╣");
         System.out.println("║  1. Criar novo anúncio                ║");
         System.out.println("║  2. Buscar imóveis                    ║");
-        System.out.println("║  3. Meus anúncios                     ║");
+        System.out.println("║  3. Visualizar anúncios               ║");
         System.out.println("║  4. Configurações                     ║");
         System.out.println("║  0. Sair                              ║");
         System.out.println("╚════════════════════════════════════════╝");
@@ -198,7 +199,7 @@ public class MenuService {
      */
     public void exibirCabecalhoGerenciarAnuncios() {
         System.out.println("\n╔════════════════════════════════════════╗");
-        System.out.println("║       GERENCIAR MEUS ANÚNCIOS         ║");
+        System.out.println("║           GERENCIAR ANÚNCIOS             ║");
         System.out.println("╚════════════════════════════════════════╝\n");
     }
     
@@ -319,11 +320,11 @@ public class MenuService {
     // ================================================================
     
     /**
-     * Exibe cabeçalho para lista de meus anúncios.
+     * Exibe cabeçalho para lista de anúncios.
      */
     public void exibirCabecalhoMeusAnuncios() {
         System.out.println("\n+============================================+");
-        System.out.println("|           MEUS ANUNCIOS                    |");
+        System.out.println("|                   ANÚNCIOS                    |");
         System.out.println("+============================================+\n");
     }
     
@@ -416,7 +417,7 @@ public class MenuService {
      */
     public void exibirCabecalhoGerenciarAnunciosMenu() {
         System.out.println("\n╔════════════════════════════════════════╗");
-        System.out.println("║       GERENCIAR MEUS ANÚNCIOS         ║");
+        System.out.println("║             GERENCIAR ANÚNCIOS           ║");
         System.out.println("╚════════════════════════════════════════╝\n");
     }
     
@@ -614,10 +615,65 @@ public class MenuService {
     }
     
     /**
-     * Exibe mensagem de nenhum anúncio na exibição de meus anúncios.
+     * Exibe mensagem de nenhum anúncio na exibição de anúncios.
      */
     public void exibirNenhumAnuncioMeusList() {
         System.out.println("  >> Nenhum anuncio criado ainda.");
         System.out.println("  >> Use a opcao 1 para criar seu primeiro anuncio!\n");
+    }
+    
+    // ===================================================================
+    // MENUS DE LOGIN E CADASTRO
+    // ===================================================================
+    
+    /**
+     * Exibe menu de login/cadastro.
+     */
+    public void exibirMenuLogin() {
+        System.out.println("\n🔐 Selecione uma opção:");
+        System.out.println("\n  [1] Entrar com conta existente");
+        System.out.println("  [2] Criar nova conta");
+        System.out.println("  [0] Sair\n");
+    }
+    
+    /**
+     * Exibe lista de usuários cadastrados para seleção.
+     */
+    public void exibirListaUsuarios(List<Usuario> usuarios) {
+        System.out.println();
+        for (int i = 0; i < usuarios.size(); i++) {
+            Usuario u = usuarios.get(i);
+            System.out.println("  [" + (i + 1) + "] " + u.getNome() + " (" + u.getEmail() + ")");
+        }
+        System.out.println("  [0] Cancelar\n");
+    }
+    
+    /**
+     * Exibe formulário de cadastro de novo usuário.
+     */
+    public void exibirFormularioCadastro() {
+        System.out.println();
+    }
+    
+    /**
+     * Exibe perfil do usuário atual.
+     */
+    public void exibirPerfilUsuario(String nome, String email, String telefone) {
+        System.out.println("\n👤 Usuário atual: " + nome);
+        System.out.println("📧 Email: " + email);
+        System.out.println("📱 Telefone: " + telefone);
+        System.out.println("\n[1] Alterar email");
+        System.out.println("[2] Alterar telefone");
+        System.out.println("[0] Cancelar\n");
+    }
+    
+    /**
+     * Exibe menu de configurações.
+     */
+    public void exibirMenuConfiguracoes() {
+        System.out.println("\n  [1] Configurar canal de notificação");
+        System.out.println("  [2] Editar perfil");
+        System.out.println("  [3] Informações do sistema");
+        System.out.println("  [0] Voltar\n");
     }
 }

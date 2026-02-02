@@ -87,7 +87,6 @@ public class AnuncioManagementService {
                 if (sucesso) {
                     // Salvar mudanças após transição bem-sucedida
                     persistenciaService.salvarAnuncios(meusAnuncios);
-                    System.out.println("\nAlteração no anúncio registrada com sucesso!");
                     pausar(scanner);
                 } else {
                     pausar(scanner);

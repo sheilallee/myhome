@@ -62,7 +62,24 @@ O MyHome implementa **padrões de projeto** estrategicamente distribuídos para 
 
 ---
 
-## 🔍 Especificação Detalhada dos Requisitos
+## � Como Executar
+
+### 🐧 Linux / Mac
+```bash
+./run.sh
+```
+
+### 🪟 Windows
+```cmd
+run.bat
+```
+Ou clique duas vezes no arquivo `run.bat`.
+
+> 💡 Para instruções detalhadas, troubleshooting e métodos alternativos, consulte a seção [Guia Completo de Execução](#-guia-completo-de-execução) abaixo.
+
+---
+
+## �🔍 Especificação Detalhada dos Requisitos
 
 ### RF01 - Criação de Anúncios e Imóveis
 
@@ -85,7 +102,7 @@ O sistema permite o cadastro de diferentes tipos de anúncios (Venda, Aluguel, T
 
 **🔗 Localização:**
 ```
-src/
+src/main/java/com/myhome/
 ├── factory/
 │   ├── AnuncioFactory.java
 │   ├── VendaFactory.java
@@ -93,7 +110,8 @@ src/
 │   └── TemporadaFactory.java
 └── builder/
     ├── ImovelBuilder.java
-    └── ImovelBuilderImpl.java
+    ├── ImovelBuilderImpl.java
+    └── Director.java
 ```
 
 ---
@@ -111,15 +129,12 @@ Certos tipos de anúncios iniciam com configuração padrão (ex: Apartamento co
 
 **📂 Classes Principais:**
 - `ImovelPrototype` - Interface Prototype com método `clone()`
-- `ApartamentoPadrao`, `CasaPadrao` - Protótipos concretos predefinidos
 - `PrototypeRegistry` - Registro de protótipos disponíveis
 
 **🔗 Localização:**
 ```
-src/prototype/
+src/main/java/com/myhome/prototype/
 ├── ImovelPrototype.java
-├── ApartamentoPadrao.java
-├── CasaPadrao.java
 └── PrototypeRegistry.java
 ```
 
@@ -137,18 +152,16 @@ Anúncios submetidos passam por moderação antes de se tornarem públicos. As v
 - **Chain of Responsibility**: Cria uma cadeia de validadores independentes que processam o anúncio sequencialmente. Cada validador pode aprovar, reprovar ou passar para o próximo.
 
 **📂 Classes Principais:**
-- `ModeracaoHandler` - Handler abstrato da cadeia
-- `TermosProibidosHandler` - Valida termos inadequados
-- `PrecoValidoHandler` - Valida se o preço é condizente
-- `FotoDescricaoHandler` - Valida presença de foto/descrição
+- `ModeradorBase` - Handler abstrato da cadeia
+- `ValidadorPalavras` - Valida termos inadequados
+- `ValidadorPreco` - Valida se o preço é condizente
 
 **🔗 Localização:**
 ```
-src/chain/
-├── ModeracaoHandler.java
-├── TermosProibidosHandler.java
-├── PrecoValidoHandler.java
-└── FotoDescricaoHandler.java
+src/main/java/com/myhome/chain/
+├── ModeradorBase.java
+├── ValidadorPalavras.java
+└── ValidadorPreco.java
 ```
 
 ---
@@ -169,13 +182,12 @@ Cada anúncio possui um ciclo de vida (Rascunho → Moderação → Ativo → Ve
 **📂 Classes Principais:**
 - `AnuncioState` - Interface State
 - `RascunhoState`, `ModeracaoState`, `AtivoState`, `VendidoState`, `SuspensoState` - Estados concretos
-- `AnuncioContext` - Contexto que mantém o estado atual
 - `AnuncioObserver` - Interface Observer
-- `AnuncianteObserver`, `LogObserver` - Observers concretos
+- `LogObserver`, `NotificationObserver` - Observers concretos
 
 **🔗 Localização:**
 ```
-src/
+src/main/java/com/myhome/
 ├── state/
 │   ├── AnuncioState.java
 │   ├── RascunhoState.java
@@ -185,8 +197,8 @@ src/
 │   └── SuspensoState.java
 └── observer/
     ├── AnuncioObserver.java
-    ├── AnuncianteObserver.java
-    └── LogObserver.java
+    ├── LogObserver.java
+    └── NotificationObserver.java
 ```
 
 ---
@@ -205,11 +217,10 @@ O sistema notifica usuários sobre eventos através de diferentes canais (Email,
 **📂 Classes Principais:**
 - `NotificacaoStrategy` - Interface Strategy
 - `EmailNotificacao`, `SMSNotificacao`, `TelegramNotificacao`, `WhatsAppNotificacao` - Estratégias concretas
-- `NotificadorContext` - Contexto que utiliza a estratégia
 
 **🔗 Localização:**
 ```
-src/strategy/
+src/main/java/com/myhome/strategy/
 ├── NotificacaoStrategy.java
 ├── EmailNotificacao.java
 ├── SMSNotificacao.java
@@ -231,19 +242,20 @@ Usuários buscam imóveis aplicando múltiplos filtros combinados (preço, local
 - **Decorator Pattern**: Adiciona responsabilidades (filtros) dinamicamente a objetos de busca, permitindo combinações flexíveis sem criar subclasses.
 
 **📂 Classes Principais:**
-- `BuscaImovel` - Componente base
-- `FiltroDecorator` - Decorator abstrato
-- `FiltroPreco`, `FiltroLocalizacao`, `FiltroArea`, `FiltroQuartos` - Decorators concretos
+- `BuscaFiltro` - Interface componente base
+- `BuscaPadrao` - Implementação base de busca
+- `FiltroBaseDecorator` - Decorator abstrato
+- `FiltroPrecoDecorator`, `FiltroLocalizacaoDecorator`, `FiltroTipoImovelDecorator` - Decorators concretos
 
 **🔗 Localização:**
 ```
-src/decorator/
-├── BuscaImovel.java
-├── FiltroDecorator.java
-├── FiltroPreco.java
-├── FiltroLocalizacao.java
-├── FiltroArea.java
-└── FiltroQuartos.java
+src/main/java/com/myhome/decorator/
+├── BuscaFiltro.java
+├── BuscaPadrao.java
+├── FiltroBaseDecorator.java
+├── FiltroPrecoDecorator.java
+├── FiltroLocalizacaoDecorator.java
+└── FiltroTipoImovelDecorator.java
 ```
 
 ---
@@ -265,11 +277,11 @@ O sistema carrega configurações globais (taxas, limites, termos proibidos, URL
 
 **🔗 Localização:**
 ```
-src/
-├── singleton/
-│   └── ConfigurationManager.java
-└── resources/
-    └── application.properties
+src/main/java/com/myhome/singleton/
+└── ConfigurationManager.java
+
+src/main/resources/
+└── application.properties
 ```
 
 ---
@@ -287,17 +299,18 @@ O sistema fornece uma interface unificada e simplificada para operações comple
 
 **📂 Classes Principais:**
 - `MyHomeFacade` - Facade principal do sistema
-- Integra: `AnuncioFactory`, `ImovelBuilder`, `ModerationHandler`, `SearchEngine`, `NotificationManager`
+- `AnuncioFacade` - Facade para operações de anúncios
 
 **🔗 Localização:**
 ```
-src/facade/
-└── MyHomeFacade.java
+src/main/java/com/myhome/facade/
+├── MyHomeFacade.java
+└── AnuncioFacade.java
 ```
 
 ---
 
-## 🚀 Como Executar o Projeto
+## 🚀 Guia Completo de Execução
 
 ### 📋 Pré-requisitos
 
@@ -368,13 +381,15 @@ mvnw.cmd exec:java -Dexec.mainClass="com.myhome.Main"
 
 ---
 
-### 📊 Povoamento de Dados
+### 📊 Dados do Sistema
 
-O sistema popula dados automaticamente a partir de arquivos JSON:
+O sistema utiliza os seguintes arquivos de dados:
 
-- `data/anuncios.json` - Anúncios salvos persistentemente
+- `seed/anuncios_seed.csv` - Dados iniciais (5 usuários e 10 anúncios)
+- `data/usuarios.json` - Usuários persistidos
+- `data/anuncios.json` - Anúncios persistidos
 
-Os anúncios criados durante a execução são salvos automaticamente e recarregados na próxima inicialização.
+Na primeira execução, o sistema carrega os dados do CSV. Os usuários e anúncios criados posteriormente são salvos automaticamente nos arquivos JSON e recarregados nas próximas inicializações.
 
 ---
 
@@ -386,7 +401,8 @@ Quando você roda `./run.sh` (Linux/Mac) ou `run.bat` (Windows):
 2. ✅ Compila todo o código-fonte
 3. ✅ Configura o classpath com todas as dependências
 4. ✅ Executa a aplicação MyHome
-5. ✅ Carrega anúncios salvos anteriormente
+5. ✅ Carrega dados do CSV na primeira execução
+6. ✅ Carrega dados persistidos do JSON nas execuções seguintes
 
 ---
 
@@ -433,44 +449,32 @@ myhome/
 │   │   │           ├── facade/           # RF08: Facade
 │   │   │           ├── model/            # Entidades de domínio
 │   │   │           ├── service/          # Serviços de negócio
-│   │   │           ├── util/             # Utilitários
+│   │   │           ├── repository/       # Acesso a dados
+│   │   │           ├── controller/       # Controladores UI
 │   │   │           └── Main.java         # Classe principal
 │   │   └── resources/
-│   │       ├── application.properties    # Configurações
-│   │       └── data/                     # Arquivos CSV
-│   │           ├── imoveis.csv
-│   │           ├── usuarios.csv
-│   │           └── anuncios.csv
-│   └── test/
-│       └── java/
-│           └── com/
-│               └── myhome/              # Testes unitários
+│   │       └── application.properties    # Configurações
+├── data/
+│   ├── usuarios.json                     # Usuários persistidos
+│   └── anuncios.json                     # Anúncios persistidos
+├── seed/
+│   └── anuncios_seed.csv                 # Dados iniciais (seed data)
 ├── docs/
-│   ├── diagrams/                        # Diagramas UML
-│   │   ├── class-diagram.puml
-│   │   └── architecture-diagram.puml
-│   └── especificacao.pdf                # Documento de especificação
-├── pom.xml                              # Configuração Maven
-├── build.gradle                         # Configuração Gradle
-└── README.md                            # Este arquivo
+│   ├── diagrama.svg                      # Diagrama visual do sistema
+│   └── diagrama.uml                      # Diagrama UML PlantUML
+├── logs/                                 # Arquivos de log
+├── pom.xml                               # Configuração Maven
+├── run.sh                                # Script execução Linux/Mac
+├── run.bat                               # Script execução Windows
+├── mvnw / mvnw.cmd                       # Maven Wrapper
+└── README.md                             # Este arquivo
 ```
 
 ---
 
 ## 🧪 Testes
 
-O projeto inclui testes unitários para todos os padrões implementados:
-
-```bash
-# Executar todos os testes
-mvn test
-
-# Executar testes com cobertura
-mvn test jacoco:report
-
-# Ver relatório de cobertura
-open target/site/jacoco/index.html
-```
+O projeto pode ser testado executando a aplicação através dos métodos descritos na seção [Como Executar](#-como-executar).
 
 ---
 
