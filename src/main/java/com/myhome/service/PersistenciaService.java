@@ -318,4 +318,111 @@ public class PersistenciaService {
                    .replace("\r", "\\r")
                    .replace("\t", "\\t");
     }
+    
+    // ===================================================================
+    // PERSISTÊNCIA DE USUÁRIOS (Necessário para login/configurações)
+    // ===================================================================
+    
+    private static final String ARQUIVO_USUARIOS = DATA_DIR + "/usuarios.json";
+    
+    /**
+     * Salva a lista de usuários em arquivo JSON
+     */
+    public void salvarUsuarios(List<Usuario> usuarios) {
+        try {
+            Files.createDirectories(Paths.get(DATA_DIR));
+            String json = usuariosToJson(usuarios);
+            Files.write(Paths.get(ARQUIVO_USUARIOS), json.getBytes());
+            System.out.println("💾 Usuários salvos com sucesso!");
+        } catch (IOException e) {
+            System.err.println("❌ Erro ao salvar usuários: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Carrega a lista de usuários do arquivo JSON
+     */
+    public List<Usuario> carregarUsuarios() {
+        try {
+            if (!Files.exists(Paths.get(ARQUIVO_USUARIOS))) {
+                return new ArrayList<>();
+            }
+            String json = new String(Files.readAllBytes(Paths.get(ARQUIVO_USUARIOS)));
+            return usuariosFromJson(json);
+        } catch (IOException e) {
+            System.err.println("❌ Erro ao carregar usuários: " + e.getMessage());
+            return new ArrayList<>();
+        }
+    }
+    
+    /**
+     * Converte lista de usuários para JSON
+     */
+    private String usuariosToJson(List<Usuario> usuarios) {
+        StringBuilder json = new StringBuilder();
+        json.append("{\n  \"usuarios\": [\n");
+        
+        for (int i = 0; i < usuarios.size(); i++) {
+            Usuario usuario = usuarios.get(i);
+            json.append("    {\n");
+            json.append("      \"nome\": \"").append(escaparJson(usuario.getNome())).append("\",\n");
+            json.append("      \"email\": \"").append(escaparJson(usuario.getEmail())).append("\",\n");
+            json.append("      \"telefone\": \"").append(escaparJson(usuario.getTelefone())).append("\",\n");
+            json.append("      \"tipo\": \"").append(usuario.getTipo()).append("\"\n");
+            json.append("    }");
+            if (i < usuarios.size() - 1) json.append(",");
+            json.append("\n");
+        }
+        
+        json.append("  ]\n");
+        json.append("}\n");
+        return json.toString();
+    }
+    
+    /**
+     * Converte JSON para lista de usuários
+     */
+    private List<Usuario> usuariosFromJson(String json) {
+        List<Usuario> usuarios = new ArrayList<>();
+        
+        if (json == null || json.isEmpty()) {
+            return usuarios;
+        }
+        
+        try {
+            // Regex para extrair cada usuário do JSON
+            String padrao = "\\{[^}]*?\"nome\"\\s*:\\s*\"([^\"]*?)\"[^}]*?" +
+                           "\"email\"\\s*:\\s*\"([^\"]*?)\"[^}]*?" +
+                           "\"telefone\"\\s*:\\s*\"([^\"]*?)\"";
+            java.util.regex.Pattern pattern = java.util.regex.Pattern.compile(padrao);
+            java.util.regex.Matcher matcher = pattern.matcher(json);
+            
+            while (matcher.find()) {
+                String nome = desescaparJson(matcher.group(1));
+                String email = desescaparJson(matcher.group(2));
+                String telefone = desescaparJson(matcher.group(3));
+                
+                Usuario usuario = new Usuario(nome, email, telefone);
+                usuario.setTipo(Usuario.TipoUsuario.PROPRIETARIO);
+                usuario.setCanalNotificacao(new EmailNotificacao(new EmailService()));
+                usuarios.add(usuario);
+            }
+        } catch (Exception e) {
+            System.err.println("❌ Erro ao parsear JSON de usuários: " + e.getMessage());
+        }
+        
+        return usuarios;
+    }
+    
+    /**
+     * Desescapa caracteres especiais do JSON
+     */
+    private String desescaparJson(String texto) {
+        if (texto == null) return "";
+        return texto.replace("\\\"", "\"")
+                   .replace("\\n", "\n")
+                   .replace("\\r", "\r")
+                   .replace("\\t", "\t")
+                   .replace("\\\\", "\\");
+    }
 }
