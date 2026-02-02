@@ -16,7 +16,7 @@ public class RascunhoState extends AnuncioState {
                 "Imóvel inválido. Não é possível publicar o anúncio."
             );
         }
-        anuncio.mudarEstado(new ModeracaoState(this.anuncio));
+        anuncio.setState(new ModeracaoState(this.anuncio));
     }
 
     @Override
@@ -27,7 +27,7 @@ public class RascunhoState extends AnuncioState {
     @Override
     public void suspender() {
         System.out.println("Anúncio suspenso a partir do estado Rascunho.");
-        anuncio.mudarEstado(new SuspensoState(this.anuncio));
+        anuncio.setState(new SuspensoState(this.anuncio));
     }
 
     @Override

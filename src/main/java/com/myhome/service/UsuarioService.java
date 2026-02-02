@@ -25,37 +25,49 @@ public class UsuarioService {
 
     /**
      * Cria um usuário proprietário.
+     * RF05 - Configura canal padrão de notificação (Email)
      */
     public Usuario criarProprietario(String nome, String email, String telefone) {
         Usuario usuario = new Usuario(nome, email, telefone);
         usuario.setTipo(Usuario.TipoUsuario.PROPRIETARIO);
+        // RF05 - Configurar canal padrão de email para notificações
+        usuario.setCanalNotificacao(new EmailNotificacao(new EmailService()));
         return usuario;
     }
     
     /**
      * Cria um usuário corretor.
+     * RF05 - Configura canal padrão de notificação (Email)
      */
     public Usuario criarCorretor(String nome, String email, String telefone) {
         Usuario usuario = new Usuario(nome, email, telefone);
         usuario.setTipo(Usuario.TipoUsuario.CORRETOR);
+        // RF05 - Configurar canal padrão de email para notificações
+        usuario.setCanalNotificacao(new EmailNotificacao(new EmailService()));
         return usuario;
     }
     
     /**
      * Cria um usuário imobiliária.
+     * RF05 - Configura canal padrão de notificação (Email)
      */
     public Usuario criarImobiliaria(String nome, String email, String telefone) {
         Usuario usuario = new Usuario(nome, email, telefone);
         usuario.setTipo(Usuario.TipoUsuario.IMOBILIARIA);
+        // RF05 - Configurar canal padrão de email para notificações
+        usuario.setCanalNotificacao(new EmailNotificacao(new EmailService()));
         return usuario;
     }
     
     /**
      * Cria um usuário comprador.
+     * RF05 - Configura canal padrão de notificação (Email)
      */
     public Usuario criarComprador(String nome, String email, String telefone) {
         Usuario usuario = new Usuario(nome, email, telefone);
         usuario.setTipo(Usuario.TipoUsuario.COMPRADOR);
+        // RF05 - Configurar canal padrão de email para notificações
+        usuario.setCanalNotificacao(new EmailNotificacao(new EmailService()));
         return usuario;
     }
 

@@ -1,9 +1,7 @@
 package com.myhome.state;
 
-import com.myhome.chain.ModeradorBase;
-import com.myhome.chain.ValidadorPalavras;
-import com.myhome.chain.ValidadorPreco;
 import com.myhome.model.Anuncio;
+import com.myhome.service.ChainValidationService;
 
 public class ModeracaoState extends AnuncioState {
 
@@ -14,22 +12,22 @@ public class ModeracaoState extends AnuncioState {
 
     @Override
     public void aprovar() {
-        ModeradorBase validador = new ValidadorPalavras();
-        validador.setNext(new ValidadorPreco());
-
-        if (validador.handle(anuncio)) {
+        // Usar ChainValidationService para validar (Chain of Responsibility Pattern)
+        ChainValidationService validationService = new ChainValidationService();
+        
+        if (validationService.validarAnuncio(this.anuncio)) {
             System.out.println("Anúncio aprovado na moderação. Movendo para estado Ativo.");
-            anuncio.mudarEstado(new AtivoState(anuncio));
+            this.anuncio.setState(new AtivoState(this.anuncio));
         } else {
             System.out.println("Anúncio reprovado na moderação. Movendo para estado Suspenso.");
-            anuncio.mudarEstado(new SuspensoState(anuncio));
+            this.anuncio.setState(new SuspensoState(this.anuncio));
         }
     }
 
     @Override
     public void suspender() {
         System.out.println("Anúncio suspenso a partir do estado Moderação.");
-        anuncio.mudarEstado(new SuspensoState(this.anuncio));
+        this.anuncio.setState(new SuspensoState(this.anuncio));
     }
 
     @Override

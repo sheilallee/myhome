@@ -22,13 +22,13 @@ public class AtivoState extends AnuncioState {
     @Override
     public void suspender() {
         System.out.println("Anúncio suspenso no estado Ativo.");
-        anuncio.mudarEstado(new SuspensoState(this.anuncio));
+        anuncio.setState(new SuspensoState(this.anuncio));
     }
 
     @Override
     public void vender() {
         System.out.println("Anúncio vendido.");
-        anuncio.mudarEstado(new VendidoState(this.anuncio));
+        anuncio.setState(new VendidoState(this.anuncio));
     }
 
     @Override

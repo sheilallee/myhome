@@ -25,10 +25,8 @@ Thumbs.db
 *.war
 *.ear
 
-# Maven
-.mvn/
-mvnw
-mvnw.cmd
+# Maven local repository
+!.mvn/wrapper/maven-wrapper.jar
 
 # Gradle
 .gradle/

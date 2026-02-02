@@ -1,6 +1,7 @@
 package com.myhome.service;
 
 import com.myhome.model.*;
+import com.myhome.strategy.EmailNotificacao;
 import java.io.*;
 import java.nio.file.*;
 import java.util.*;
@@ -73,7 +74,7 @@ public class PersistenciaService {
             json.append("      \"titulo\": \"").append(escaparJson(anuncio.getTitulo())).append("\",\n");
             json.append("      \"preco\": ").append(anuncio.getPreco()).append(",\n");
             json.append("      \"descricao\": \"").append(escaparJson(anuncio.getDescricao())).append("\",\n");
-            json.append("      \"estado\": \"").append(escaparJson(anuncio.getEstado().getNome())).append("\",\n");
+            json.append("      \"estado\": \"").append(escaparJson(anuncio.getState().getNome())).append("\",\n");
             
             // Imovel
             json.append("      \"imovel\": {\n");
@@ -170,6 +171,8 @@ public class PersistenciaService {
                 anunciante.setNome(nomeAnunciante);
                 anunciante.setEmail(emailAnunciante);
                 anunciante.setTelefone(telefoneAnunciante);
+                // RF05 - Configurar canal padrão de email ao carregar do JSON
+                anunciante.setCanalNotificacao(new EmailNotificacao(new EmailService()));
                 
                 // Cria anúncio
                 Anuncio anuncio = new Anuncio();
@@ -202,11 +205,14 @@ public class PersistenciaService {
     private Imovel criarImovelDoJson(String json, String tipo, double area, String endereco) {
         Imovel imovel = null;
         
+        // Extrai o bloco de endereco estruturado
+        String blocoEndereco = extrairBlocoJson(json, "endereco");
+        
         // Extrai dados do endereco estruturado
-        String rua = extrairValor(json, "rua");
-        String numero = extrairValor(json, "numero");
-        String cidade = extrairValor(json, "cidade");
-        String estado = extrairValor(json, "estado");
+        String rua = extrairValor(blocoEndereco, "rua");
+        String numero = extrairValor(blocoEndereco, "numero");
+        String cidade = extrairValor(blocoEndereco, "cidade");
+        String estado = extrairValor(blocoEndereco, "estado");
         
         // Se não encontrou a estrutura de endereco, tenta parse da string (retrocompatibilidade)
         if (rua.isEmpty() && !endereco.isEmpty()) {
@@ -284,6 +290,21 @@ public class PersistenciaService {
             return matcher.group(1).trim();
         }
         return "";
+    }
+    
+    /**
+     * Extrai um bloco JSON estruturado (objeto entre chaves)
+     * Exemplo: extrairBlocoJson(json, "endereco") retorna {"rua": ..., "estado": ...}
+     */
+    private String extrairBlocoJson(String json, String chave) {
+        String padrao = "\"" + chave + "\"\\s*:\\s*\\{([^}]*)\\}";
+        java.util.regex.Pattern pattern = java.util.regex.Pattern.compile(padrao);
+        java.util.regex.Matcher matcher = pattern.matcher(json);
+        
+        if (matcher.find()) {
+            return "{" + matcher.group(1) + "}";
+        }
+        return "{}";
     }
     
     /**

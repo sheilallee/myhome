@@ -301,61 +301,113 @@ src/facade/
 
 ### 📋 Pré-requisitos
 
-- Java JDK 11 ou superior
-- Maven 3.6+ ou Gradle
-- IDE (IntelliJ IDEA, Eclipse, VS Code)
+- **Java JDK 11 ou superior** (recomendado JDK 21)
+- IDE (opcional: IntelliJ IDEA, Eclipse, VS Code)
+
+> ⚠️ **Nota**: Não é necessário instalar Maven! O projeto usa **Maven Wrapper** que funciona automaticamente em qualquer sistema operacional.
 
 ### 🔧 Instalação e Execução
 
-#### Opção 1: Usando Maven
+#### 🎯 Método Recomendado: Scripts Automatizados
+
+##### 🐧 **Linux / Mac**
 
 ```bash
 # 1. Clone o repositório
 git clone https://github.com/sheilallee/myhome.git
 cd myhome
 
-# 2. Compile o projeto
-mvn clean compile
-
-# 3. Execute os testes
-mvn test
-
-# 4. Execute a aplicação
-mvn exec:java -Dexec.mainClass="com.myhome.Main"
+# 2. Execute o script (compila e roda automaticamente)
+./run.sh
 ```
 
-#### Opção 2: Usando Gradle
+##### 🪟 **Windows**
 
-```bash
+```cmd
 # 1. Clone o repositório
 git clone https://github.com/sheilallee/myhome.git
 cd myhome
 
-# 2. Compile o projeto
-./gradlew build
-
-# 3. Execute a aplicação
-./gradlew run
+# 2. Execute o script (compila e roda automaticamente)
+run.bat
 ```
 
-#### Opção 3: Usando IDE
+Ou simplesmente **clique duas vezes** no arquivo `run.bat` no Windows Explorer!
 
-1. Importe o projeto como Maven/Gradle project
-2. Localize a classe `Main.java` em `src/main/java/com/myhome/`
+---
+
+#### 🔨 Método Alternativo: Maven Wrapper Manual
+
+##### 🐧 **Linux / Mac**
+
+```bash
+# Compilar
+./mvnw clean compile
+
+# Executar
+./mvnw exec:java -Dexec.mainClass="com.myhome.Main"
+```
+
+##### 🪟 **Windows**
+
+```cmd
+# Compilar
+mvnw.cmd clean compile
+
+# Executar
+mvnw.cmd exec:java -Dexec.mainClass="com.myhome.Main"
+```
+
+---
+
+#### 💡 Método IDE
+
+1. Importe o projeto como **Maven project**
+2. Localize a classe [Main.java](src/main/java/com/myhome/Main.java)
 3. Execute com `Run` ou `Debug`
+
+---
 
 ### 📊 Povoamento de Dados
 
-O sistema popula dados automaticamente a partir de arquivos CSV localizados em `src/main/resources/data/`:
+O sistema popula dados automaticamente a partir de arquivos JSON:
 
-- `imoveis.csv` - Dados de imóveis
-- `usuarios.csv` - Dados de usuários
-- `anuncios.csv` - Dados de anúncios
+- `data/anuncios.json` - Anúncios salvos persistentemente
 
-**Exemplo de execução:**
+Os anúncios criados durante a execução são salvos automaticamente e recarregados na próxima inicialização.
+
+---
+
+### ✨ O que acontece ao executar?
+
+Quando você roda `./run.sh` (Linux/Mac) ou `run.bat` (Windows):
+
+1. ✅ O Maven Wrapper baixa automaticamente o Maven (se necessário)
+2. ✅ Compila todo o código-fonte
+3. ✅ Configura o classpath com todas as dependências
+4. ✅ Executa a aplicação MyHome
+5. ✅ Carrega anúncios salvos anteriormente
+
+---
+
+### 🆘 Solução de Problemas
+
+#### "Maven Wrapper não encontrado"
 ```bash
-# Os dados são carregados automaticamente na inicialização
-java -jar myhome.jar --load-data
+# Gere novamente o wrapper
+mvn wrapper:wrapper
+```
+
+#### "Permissão negada" (Linux/Mac)
+```bash
+# Dê permissão de execução
+chmod +x mvnw run.sh
+```
+
+#### Erro de compilação
+```bash
+# Limpe o cache e recompile
+./mvnw clean install
 ```
 
 ---

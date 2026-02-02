@@ -35,19 +35,6 @@ public class Terreno extends Imovel {
         return new Terreno(this);
     }
     
-    @Override
-    public boolean validar() {
-        if (!super.validar()) {
-            return false;
-        }
-        
-        if (zoneamento == null || zoneamento.trim().isEmpty()) {
-            return false;
-        }
-        
-        return true;
-    }
-    
     public double getAreaTerreno() {
         return areaTerreno;
     }
