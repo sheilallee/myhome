@@ -43,7 +43,7 @@ public class MenuService {
         System.out.println("╠════════════════════════════════════════╣");
         System.out.println("║  1. Criar novo anúncio                ║");
         System.out.println("║  2. Buscar imóveis                    ║");
-        System.out.println("║  3. Meus anúncios                     ║");
+        System.out.println("║  3. Visualizar anúncios               ║");
         System.out.println("║  4. Configurações                     ║");
         System.out.println("║  0. Sair                              ║");
         System.out.println("╚════════════════════════════════════════╝");
@@ -198,7 +198,7 @@ public class MenuService {
      */
     public void exibirCabecalhoGerenciarAnuncios() {
         System.out.println("\n╔════════════════════════════════════════╗");
-        System.out.println("║       GERENCIAR MEUS ANÚNCIOS         ║");
+        System.out.println("║           GERENCIAR ANÚNCIOS             ║");
         System.out.println("╚════════════════════════════════════════╝\n");
     }
     
@@ -319,11 +319,11 @@ public class MenuService {
     // ================================================================
     
     /**
-     * Exibe cabeçalho para lista de meus anúncios.
+     * Exibe cabeçalho para lista de anúncios.
      */
     public void exibirCabecalhoMeusAnuncios() {
         System.out.println("\n+============================================+");
-        System.out.println("|           MEUS ANUNCIOS                    |");
+        System.out.println("|                   ANÚNCIOS                    |");
         System.out.println("+============================================+\n");
     }
     
@@ -416,7 +416,7 @@ public class MenuService {
      */
     public void exibirCabecalhoGerenciarAnunciosMenu() {
         System.out.println("\n╔════════════════════════════════════════╗");
-        System.out.println("║       GERENCIAR MEUS ANÚNCIOS         ║");
+        System.out.println("║             GERENCIAR ANÚNCIOS           ║");
         System.out.println("╚════════════════════════════════════════╝\n");
     }
     
@@ -614,7 +614,7 @@ public class MenuService {
     }
     
     /**
-     * Exibe mensagem de nenhum anúncio na exibição de meus anúncios.
+     * Exibe mensagem de nenhum anúncio na exibição de anúncios.
      */
     public void exibirNenhumAnuncioMeusList() {
         System.out.println("  >> Nenhum anuncio criado ainda.");

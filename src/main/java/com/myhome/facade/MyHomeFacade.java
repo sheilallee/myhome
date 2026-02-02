@@ -216,7 +216,7 @@ public class MyHomeFacade {
             
             menuService.exibirSucessoCriacaoImovelInterativo(imovel.getTipo(), imovel.getEndereco().toString(), imovel.getArea());
             
-            Anuncio anuncio = anuncioService.criarAnuncioInterativo(scanner, imovel);
+            Anuncio anuncio = anuncioService.criarAnuncioInterativo(scanner, imovel, usuarioAtual);
             
             if (anuncio == null) {
                 menuService.exibirCancelamentoCriacaoAnuncio();
@@ -277,7 +277,7 @@ public class MyHomeFacade {
             
             menuService.exibirSucessoValidacaoImovel();
             
-            Anuncio anuncio = anuncioService.criarAnuncioInterativo(scanner, imovel);
+            Anuncio anuncio = anuncioService.criarAnuncioInterativo(scanner, imovel, usuarioAtual);
             
             if (anuncio == null) {
                 menuService.exibirCancelamentoCriacaoAnuncio();
