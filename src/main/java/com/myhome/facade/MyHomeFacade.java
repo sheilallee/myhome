@@ -5,27 +5,26 @@ import java.util.List;
 import java.util.Scanner;
 import java.util.Set;
 
-import com.myhome.builder.ImovelBuilder;
 import com.myhome.controller.UIController;
 import com.myhome.decorator.BuscaFiltro;
-import com.myhome.decorator.BuscaPadrao;
-import com.myhome.factory.AnuncioFactory;
 import com.myhome.model.Anuncio;
 import com.myhome.model.Apartamento;
 import com.myhome.model.Casa;
-import com.myhome.model.Endereco;
 import com.myhome.model.Imovel;
 import com.myhome.model.SalaComercial;
 import com.myhome.model.Terreno;
 import com.myhome.model.Usuario;
-import com.myhome.observer.AnuncioObserver;
 import com.myhome.prototype.PrototypeRegistry;
 import com.myhome.service.AnuncioService;
+import com.myhome.service.AnuncioManagementService;
 import com.myhome.service.EmailService;
 import com.myhome.service.ImovelService;
 import com.myhome.service.MenuService;
+import com.myhome.service.NotificationConfigService;
+import com.myhome.service.PatternsService;
 import com.myhome.service.PersistenciaService;
 import com.myhome.service.SearchFilterService;
+import com.myhome.service.SystemInfoService;
 import com.myhome.service.SMSService;
 import com.myhome.service.UsuarioService;
 import com.myhome.service.ValidadorService;
@@ -33,8 +32,6 @@ import com.myhome.service.WhatsAppService;
 import com.myhome.singleton.ConfigurationManager;
 import com.myhome.strategy.EmailNotificacao;
 import com.myhome.strategy.NotificationManager;
-import com.myhome.strategy.SMSNotificacao;
-import com.myhome.strategy.WhatsAppNotificacao;
 
 // RF08 - Facade: orquestra todos os subsistemas do MyHome
 public class MyHomeFacade {
@@ -47,7 +44,9 @@ public class MyHomeFacade {
     private final ValidadorService validadorService;
     private final UsuarioService usuarioService;
     private final PersistenciaService persistenciaService;
-    
+    private final SystemInfoService systemInfoService;
+    private final PatternsService patternsService;
+
     // Dados da aplicação
     private List<Anuncio> meusAnuncios;
     private int contadorAnuncios;
@@ -63,6 +62,8 @@ public class MyHomeFacade {
         this.persistenciaService = new PersistenciaService();
         this.imovelService = new ImovelService(menuService, validadorService);
         this.anuncioService = new AnuncioService(menuService, validadorService, usuarioService);
+        this.systemInfoService = new SystemInfoService(uiController);
+        this.patternsService = new PatternsService();
         
         this.meusAnuncios = new ArrayList<>();
         this.contadorAnuncios = 0;
@@ -556,220 +557,17 @@ public class MyHomeFacade {
     /**
      * Gerencia um anúncio específico com opções baseadas no estado atual
      */
-    private void gerenciarAnuncioEspecifico(Scanner scanner, Anuncio anuncio) {
-        AnuncioFacade facade = new AnuncioFacade();
-        
-        while (true) {
-            System.out.println("\n╔════════════════════════════════════════╗");
-            System.out.println("║       GERENCIAR ANÚNCIO                ║");
-            System.out.println("╚════════════════════════════════════════╝");
-            
-            System.out.println("\n📄 " + anuncio.getTitulo());
-            System.out.println("💰 R$ " + String.format("%,.2f", anuncio.getPreco()));
-            System.out.println("📊 Estado atual: " + anuncio.getState().getNome().toUpperCase());
-            
-            System.out.println("\n┌────────────────────────────────────────┐");
-            System.out.println("│ AÇÕES DISPONÍVEIS:                     │");
-            System.out.println("├────────────────────────────────────────┤");
-            
-            String estadoNome = anuncio.getState().getNome();
-            
-            // Opções baseadas no estado atual
-            if (estadoNome.equals("Rascunho")) {
-                System.out.println("│ [1] Enviar para Moderação              │");
-                System.out.println("│ [2] Suspender Anúncio                  │");
-            } else if (estadoNome.equals("Moderação")) {
-                System.out.println("│ [1] Aprovar Anúncio                    │");
-                System.out.println("│ [2] Reprovar Anúncio                   │");
-                System.out.println("│ [3] Suspender Anúncio                  │");
-            } else if (estadoNome.equals("Ativo")) {
-                System.out.println("│ [1] Marcar como Vendido                │");
-                System.out.println("│ [2] Suspender Anúncio                  │");
-            } else if (estadoNome.equals("Suspenso")) {
-                System.out.println("│ [1] Reativar (enviar para Moderação)   │");
-            } else if (estadoNome.equals("Vendido")) {
-                System.out.println("│ (Nenhuma ação disponível)              │");
-            }
-            
-            System.out.println("│ [0] Voltar                             │");
-            System.out.println("└────────────────────────────────────────┘");
-            
-            System.out.print("\n➤ Escolha uma ação: ");
-            
-            try {
-                int opcao = Integer.parseInt(scanner.nextLine().trim());
-                
-                if (opcao == 0) {
-                    return;
-                }
-                
-                boolean sucesso = executarAcaoAnuncio(facade, anuncio, opcao, estadoNome);
-                
-                if (sucesso) {
-                    // Salvar mudanças após transição bem-sucedida
-                    persistenciaService.salvarAnuncios(meusAnuncios);
-                    System.out.println("\n✅ Ação executada com sucesso!");
-                    pausar(scanner);
-                } else {
-                    pausar(scanner);
-                }
-                
-            } catch (NumberFormatException e) {
-                System.out.println("\n❌ Digite um número válido!");
-                pausar(scanner);
-            } catch (IllegalStateException e) {
-                System.out.println("\n⚠️  Erro: " + e.getMessage());
-                pausar(scanner);
-            }
-        }
-    }
-    
     /**
-     * Executa ação baseada no estado atual e opção escolhida
-     * 
-     * RF04 - State Pattern: Gerencia transições entre estados
-     * O padrão State valida automaticamente as transições permitidas
-     * e lança exceções quando uma transição é inválida.
+     * Gerencia um anúncio específico com opções baseadas no estado atual
+     * Delegado a AnuncioManagementService
      */
-    private boolean executarAcaoAnuncio(AnuncioFacade facade, Anuncio anuncio, int opcao, String estadoNome) {
-        try {
-            System.out.println("\n" + "═".repeat(42));
-            
-            // Pré-validação: verificar se o imóvel é válido antes de qualquer transição
-            // (necessário apenas para transições que exigem validação)
-            if ((estadoNome.equals("Rascunho") && opcao == 1) || 
-                (estadoNome.equals("Suspenso") && opcao == 1)) {
-                
-                boolean isValido = anuncio.getImovel().validar();
-                
-                if (!isValido) {
-                    System.out.println("❌ ERRO DE VALIDAÇÃO DO IMÓVEL:");
-                    System.out.println("   O imóvel não atende aos requisitos mínimos:");
-                    Imovel imovel = anuncio.getImovel();
-                    
-                    // Verificar cada aspecto
-                    if (imovel.getArea() <= 0) {
-                        System.out.println("   ❌ Área inválida: " + imovel.getArea() + " (deve ser > 0)");
-                    } else {
-                        System.out.println("   ✅ Área válida: " + imovel.getArea() + " m²");
-                    }
-                    
-                    if (imovel.getEndereco() == null) {
-                        System.out.println("   ❌ Endereço é nulo");
-                    } else if (imovel.getEndereco().getCidade() == null) {
-                        System.out.println("   ❌ Cidade do endereço é nula");
-                    } else if (imovel.getEndereco().getCidade().trim().isEmpty()) {
-                        System.out.println("   ❌ Cidade do endereço está vazia");
-                    } else {
-                        System.out.println("   ✅ Endereço válido: " + imovel.getEndereco().getCidade());
-                    }
-                    
-                    return false;
-                }
-            }
-            
-            if (estadoNome.equals("Rascunho")) {
-                if (opcao == 1) {
-                    System.out.println("📤 Enviando anúncio para moderação...\n");
-                    facade.enviarParaModeracao(anuncio);
-                    System.out.println("✅ Anúncio enviado para MODERAÇÃO");
-                    System.out.println("   📝 Observer registrando mudança em logs/sistema.log...");
-                    System.out.println("   Próxima etapa: Validação (Chain of Responsibility)");
-                    
-                    // RF05 - STRATEGY: Enviar notificação usando o canal configurado
-                    notificarUsuario("📤 Seu anúncio '" + anuncio.getTitulo() + "' foi enviado para moderação!");
-                    
-                    return true;
-                } else if (opcao == 2) {
-                    System.out.println("⏸️  Suspendendo anúncio...\n");
-                    facade.suspender(anuncio);
-                    System.out.println("✅ Anúncio movido para SUSPENSO");
-                    
-                    // RF05 - STRATEGY: Enviar notificação
-                    notificarUsuario("⏸️  Seu anúncio '" + anuncio.getTitulo() + "' foi suspenso.");
-                    
-                    return true;
-                }
-            } else if (estadoNome.equals("Moderação")) {
-                if (opcao == 1) {
-                    System.out.println("✅ Aprovando anúncio...\n");
-                    System.out.println("Executando Chain of Responsibility:");
-                    facade.aprovar(anuncio);
-                    System.out.println("\n✅ Anúncio movido para ATIVO (todas as validações passaram)");
-                    System.out.println("   📝 Observer registrando mudança em logs/sistema.log...");
-                    
-                    // RF05 - STRATEGY: Enviar notificação de aprovação
-                    notificarUsuario("✅ Parabéns! Seu anúncio '" + anuncio.getTitulo() + "' foi aprovado e está ATIVO!");
-                    
-                    return true;
-                } else if (opcao == 2) {
-                    System.out.println("❌ Reprovando anúncio...\n");
-                    facade.reprovar(anuncio);
-                    System.out.println("✅ Anúncio movido para SUSPENSO");
-                    
-                    // RF05 - STRATEGY: Enviar notificação de rejeição
-                    notificarUsuario("❌ Seu anúncio '" + anuncio.getTitulo() + "' foi reprovado e movido para SUSPENSO.");
-                    
-                    return true;
-                } else if (opcao == 3) {
-                    System.out.println("⏸️  Suspendendo anúncio...\n");
-                    facade.suspender(anuncio);
-                    System.out.println("✅ Anúncio movido para SUSPENSO");
-                    
-                    // RF05 - STRATEGY: Enviar notificação
-                    notificarUsuario("⏸️  Seu anúncio '" + anuncio.getTitulo() + "' foi suspenso durante moderação.");
-                    
-                    return true;
-                }
-            } else if (estadoNome.equals("Ativo")) {
-                if (opcao == 1) {
-                    System.out.println("🎉 Marcando anúncio como vendido...\n");
-                    facade.vender(anuncio);
-                    System.out.println("✅ Anúncio movido para VENDIDO");
-                    
-                    // RF05 - STRATEGY: Enviar notificação de venda
-                    notificarUsuario("🎉 Seu anúncio '" + anuncio.getTitulo() + "' foi marcado como VENDIDO!");
-                    
-                    return true;
-                } else if (opcao == 2) {
-                    System.out.println("⏸️  Suspendendo anúncio...\n");
-                    facade.suspender(anuncio);
-                    System.out.println("✅ Anúncio movido para SUSPENSO");
-                    
-                    // RF05 - STRATEGY: Enviar notificação
-                    notificarUsuario("⏸️  Seu anúncio '" + anuncio.getTitulo() + "' foi suspenso.");
-                    
-                    return true;
-                }
-            } else if (estadoNome.equals("Suspenso")) {
-                if (opcao == 1) {
-                    System.out.println("🔄 Reativando anúncio...\n");
-                    facade.reativar(anuncio);
-                    System.out.println("✅ Anúncio enviado para MODERAÇÃO");
-                    System.out.println("   Próxima etapa: Validação (Chain of Responsibility)");
-                    
-                    // RF05 - STRATEGY: Enviar notificação
-                    notificarUsuario("🔄 Seu anúncio '" + anuncio.getTitulo() + "' foi reativado e está em MODERAÇÃO!");
-                    
-                    return true;
-                }
-            }
-            
-            System.out.println("❌ Opção inválida para o estado atual!");
-            return false;
-            
-        } catch (IllegalStateException e) {
-            System.out.println("\n⚠️  ERRO DE TRANSIÇÃO DE ESTADO (State Pattern):");
-            System.out.println("   " + e.getMessage());
-            System.out.println("\n💡 Motivo: O padrão State não permite esta transição");
-            System.out.println("   a partir do estado atual.");
-            return false;
-        } catch (Exception e) {
-            System.out.println("\n❌ ERRO INESPERADO:");
-            System.out.println("   " + e.getMessage());
-            e.printStackTrace();
-            return false;
-        }
+    private void gerenciarAnuncioEspecifico(Scanner scanner, Anuncio anuncio) {
+        AnuncioManagementService managementService = new AnuncioManagementService(
+            persistenciaService,
+            uiController,
+            meusAnuncios
+        );
+        managementService.gerenciarAnuncioEspecifico(scanner, anuncio);
     }
     
     /**
@@ -822,194 +620,33 @@ public class MyHomeFacade {
     
     /**
      * RF05 - STRATEGY PATTERN: Configurar canal de notificação
-     * Permite ao usuário escolher como quer ser notificado
+     * Delegado a NotificationConfigService
      */
     private void configurarCanalNotificacao(Scanner scanner) {
-        System.out.println("\n╔════════════════════════════════════════╗");
-        System.out.println("║ RF05 - STRATEGY (Canal de Notificação)  ║");
-        System.out.println("╚════════════════════════════════════════╝\n");
-        
-        System.out.println("📢 Escolha o canal de notificação preferido:\n");
-        System.out.println("[1] Email 📧");
-        System.out.println("    → Notificações por email (mais detalhado)");
-        System.out.println("[2] SMS 📱");
-        System.out.println("    → Notificações por SMS (mais rápido)");
-        System.out.println("[3] WhatsApp 💬");
-        System.out.println("    → Notificações por WhatsApp");
-        System.out.println("[0] Cancelar");
-        
-        try {
-            System.out.print("\nEscolha uma opção: ");
-            int opcao = Integer.parseInt(scanner.nextLine().trim());
-            
-            switch (opcao) {
-                case 1:
-                    usuarioAtual.setCanalNotificacao(
-                        new EmailNotificacao(new EmailService())
-                    );
-                    System.out.println("\n✅ Canal alterado para EMAIL");
-                    System.out.println("   Você receberá notificações por: " + usuarioAtual.getEmail());
-                    testarNotificacao("📧 Email: Bem-vindo! Você está recebendo notificações por email.");
-                    break;
-                    
-                case 2:
-                    usuarioAtual.setCanalNotificacao(
-                        new SMSNotificacao(new SMSService())
-                    );
-                    System.out.println("\n✅ Canal alterado para SMS");
-                    System.out.println("   Você receberá notificações por: " + usuarioAtual.getTelefone());
-                    testarNotificacao("📱 SMS: Bem-vindo! Você está recebendo notificações por SMS.");
-                    break;
-                    
-                case 3:
-                    usuarioAtual.setCanalNotificacao(
-                        new WhatsAppNotificacao(new WhatsAppService())
-                    );
-                    System.out.println("\n✅ Canal alterado para WHATSAPP");
-                    System.out.println("   Você receberá notificações por: " + usuarioAtual.getTelefone());
-                    testarNotificacao("💬 WhatsApp: Bem-vindo! Você está recebendo notificações por WhatsApp.");
-                    break;
-                    
-                case 0:
-                    System.out.println("❌ Operação cancelada.");
-                    break;
-                    
-                default:
-                    System.out.println("❌ Opção inválida!");
-            }
-        } catch (NumberFormatException e) {
-            System.out.println("❌ Opção inválida! Digite um número.");
-        }
+        NotificationConfigService configService = new NotificationConfigService(
+            new EmailService(),
+            new SMSService(),
+            new WhatsAppService()
+        );
+        configService.configurarCanalNotificacao(scanner, usuarioAtual);
     }
     
-    /**
+     /**
      * Testa o canal de notificação configurado
      */
-    private void testarNotificacao(String mensagem) {
-        System.out.println("\n📤 Enviando notificação de teste...");
-        NotificationManager manager = new NotificationManager();
-        manager.enviarNotificacao(usuarioAtual, mensagem);
-        System.out.println("✅ Notificação enviada com sucesso!");
-    }
-    
     /**
      * Exibe informações do sistema (RF07)
+     * Delegado a SystemInfoService para desacoplamento
      */
     private void exibirInformacoesDoSistema() {
-        System.out.println("\n╔════════════════════════════════════════╗");
-        System.out.println("║   RF07 - SINGLETON (Configurações)     ║");
-        System.out.println("╚════════════════════════════════════════╝\n");
-        
-        ConfigurationManager config = ConfigurationManager.getInstance();
-        
-        System.out.println("📋 Configurações do Sistema:");
-        System.out.println("─".repeat(40));
-        System.out.println("Nome: " + config.getProperty("app.name", "MyHome"));
-        System.out.println("Versão: " + config.getProperty("app.version", "2.0"));
-        System.out.println("Cidade: João Pessoa - Paraíba");
-        System.out.println("─".repeat(40));
-        
-        System.out.println("\n👤 Dados do Usuário Atual:");
-        System.out.println("─".repeat(40));
-        System.out.println("Nome: " + usuarioAtual.getNome());
-        System.out.println("Email: " + usuarioAtual.getEmail());
-        System.out.println("Telefone: " + usuarioAtual.getTelefone());
-        System.out.println("Canal de Notificação: " + 
-            (usuarioAtual.getCanalNotificacao() != null 
-                ? usuarioAtual.getCanalNotificacao().getClass().getSimpleName().replace("Notificacao", "")
-                : "Não configurado"));
-        System.out.println("─".repeat(40));
-        
-        System.out.println("\n💡 ConfigurationManager é um Singleton!");
-        System.out.println("   Sempre a mesma instância: " + config.hashCode());
+        systemInfoService.exibirInformacoes(usuarioAtual);
     }
     
     /**
      * Demonstra todos os padrões GoF implementados
+     * Delegado a PatternsService para desacoplamento
      */
     public void demonstrarPadroesGoF() {
-        System.out.println("╔════════════════════════════════════════╗");
-        System.out.println("║   DEMONSTRAÇÃO PADRÕES GOF             ║");
-        System.out.println("║   RF01 + RF02 + RF07                   ║");
-        System.out.println("╚════════════════════════════════════════╝\n");
-        
-        System.out.println("📚 PADRÕES IMPLEMENTADOS NO MYHOME:\n");
-        
-        System.out.println("✅ RF01 - FACTORY METHOD (Criação de Anúncios)");
-        System.out.println("   → VendaFactory, AluguelFactory, TemporadaFactory");
-        System.out.println("   → Usado na opção: 1 - Criar novo anúncio\n");
-        
-        System.out.println("✅ RF01 - BUILDER (Construção de Imóveis)");
-        System.out.println("   → ImovelBuilder, ImovelBuilderImpl");
-        System.out.println("   → Usado na opção: 1 - Criar novo anúncio → Criar do zero\n");
-        
-        System.out.println("✅ RF01 - DIRECTOR");
-        System.out.println("   → Director (sequências pré-definidas)");
-        System.out.println("   → Disponível para construções automatizadas\n");
-        
-        System.out.println("✅ RF02 - PROTOTYPE (Modelos Padrão de Imóveis)");
-        System.out.println("   → Interface: ImovelPrototype (método clonar())");
-        System.out.println("   → Singleton: PrototypeRegistry (armazena e fornece clones)");
-        demonstrarPrototype();
-        System.out.println("   → Usado na opção: 1 - Criar novo anúncio → Usar modelo padrão\n");
-        
-        System.out.println("✅ RF07 - SINGLETON (Configurações)");
-        System.out.println("   → ConfigurationManager");
-        System.out.println("   → Usado na opção: 4 - Configurações\n");
-        
-        System.out.println("💡 COMO TESTAR:");
-        System.out.println("   1. Use a opção '1' → '2' para criar anúncio com Builder");
-        System.out.println("   2. Use a opção '1' → '1' para criar anúncio com Prototype");
-        System.out.println("   3. Use a opção '3' para ver seus anúncios cadastrados");
-        System.out.println("   4. Use a opção '4' para ver o Singleton em ação\n");
-        
-        System.out.println("═".repeat(60));
-        System.out.println("✅ Todos os padrões estão funcionando via terminal!");
-        System.out.println("═".repeat(60) + "\n");
-    }
-    
-    /**
-     * Demonstra o funcionamento do padrão Prototype em detalhes.
-     */
-    private void demonstrarPrototype() {
-        System.out.println("   ┌ DEMONSTRAÇÃO LIVE ┐");
-        
-        PrototypeRegistry registro = PrototypeRegistry.getInstance();
-        
-        // Obtém um protótipo
-        Imovel original = registro.obterPrototipo("apartamento-padrao");
-        
-        // Clona o protótipo
-        Imovel clone1 = registro.obterPrototipo("apartamento-padrao");
-        Imovel clone2 = registro.obterPrototipo("apartamento-padrao");
-        
-        System.out.println("   • Original: " + original.hashCode());
-        System.out.println("   • Clone 1: " + clone1.hashCode());
-        System.out.println("   • Clone 2: " + clone2.hashCode());
-        System.out.println("   ✓ São objetos diferentes (hashcodes distintos)");
-        System.out.println("   ✓ Cada clone é independente para customização");
-        System.out.println("   └──────────────────┘");
-    }
-    
-    // ================================================================
-    // MÉTODOS AUXILIARES
-    // ================================================================
-    
-    /**
-     * Imprime banner da aplicação.
-     */
-    private void imprimirBanner() {
-        System.out.println("=".repeat(60));
-        System.out.println("           MYHOME - ANÚNCIOS DE IMÓVEIS");
-        System.out.println("=".repeat(60));
-    }
-    
-    /**
-     * Imprime rodapé da aplicação.
-     */
-    private void imprimirRodape() {
-        System.out.println("\n" + "=".repeat(60));
-        System.out.println("✓ Sistema executado com sucesso!");
-        System.out.println("=".repeat(60));
+        patternsService.demonstrarTodosPadroes();
     }
 }

@@ -43,25 +43,6 @@ public class Casa extends Imovel {
         return new Casa(this);
     }
     
-    @Override
-    public boolean validar() {
-        // Validação da classe base
-        if (!super.validar()) {
-            return false;
-        }
-        
-        // Validações específicas de Casa
-        if (quartos <= 0 || banheiros <= 0) {
-            return false;
-        }
-        
-        if (temGaragem && vagas <= 0) {
-            return false;
-        }
-        
-        return true;
-    }
-    
     public int getQuartos() {
         return quartos;
     }

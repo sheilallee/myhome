@@ -39,23 +39,6 @@ public class Apartamento extends Imovel {
         return new Apartamento(this);
     }
     
-    @Override
-    public boolean validar() {
-        if (!super.validar()) {
-            return false;
-        }
-        
-        if (quartos <= 0 || banheiros <= 0) {
-            return false;
-        }
-        
-        if (andar < 0) {
-            return false;
-        }
-        
-        return true;
-    }
-    
     public int getQuartos() {
         return quartos;
     }

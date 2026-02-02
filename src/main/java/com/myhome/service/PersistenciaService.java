@@ -1,6 +1,7 @@
 package com.myhome.service;
 
 import com.myhome.model.*;
+import com.myhome.strategy.EmailNotificacao;
 import java.io.*;
 import java.nio.file.*;
 import java.util.*;
@@ -170,6 +171,8 @@ public class PersistenciaService {
                 anunciante.setNome(nomeAnunciante);
                 anunciante.setEmail(emailAnunciante);
                 anunciante.setTelefone(telefoneAnunciante);
+                // RF05 - Configurar canal padrão de email ao carregar do JSON
+                anunciante.setCanalNotificacao(new EmailNotificacao(new EmailService()));
                 
                 // Cria anúncio
                 Anuncio anuncio = new Anuncio();

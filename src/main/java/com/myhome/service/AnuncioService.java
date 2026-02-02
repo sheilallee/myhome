@@ -45,6 +45,22 @@ public class AnuncioService {
     }
     
     /**
+     * Envia notificação de boas-vindas quando o anúncio é criado
+     * RF05 - STRATEGY: Utiliza o canal de notificação configurado do usuário
+     */
+    private void notificarAnuncioCriado(Anuncio anuncio) {
+        if (anuncio.getAnunciante() == null || anuncio.getAnunciante().getCanalNotificacao() == null) {
+            return;
+        }
+        
+        String msg = "Bem-vindo ao MyHome! Seu anúncio \"" + anuncio.getTitulo() + 
+                     "\" foi criado com sucesso e se encontra em Rascunho.";
+        
+        NotificationManager manager = new NotificationManager();
+        manager.enviarNotificacao(anuncio.getAnunciante(), msg);
+    }
+    
+    /**
      * Cria um anúncio interativo através da linha de comando usando Factory Method.
      */
     public Anuncio criarAnuncioInterativo(Scanner scanner, Imovel imovel) {
@@ -85,6 +101,7 @@ public class AnuncioService {
         
         Anuncio anuncio = factory.criarAnuncio(titulo, preco, descricao, imovel, anunciante);
         configurarObservers(anuncio);
+        notificarAnuncioCriado(anuncio);
         return anuncio;
     }
     
