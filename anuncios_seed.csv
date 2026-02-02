@@ -1,0 +1,15 @@
+# Arquivo de Anúncios com Seed Data (E1 - Requisito de Execução)
+# Formato: usuario_nome,usuario_email,usuario_telefone,titulo,preco,descricao,tipo_anuncio,tipo_imovel,rua,numero,cidade,estado,area,quartos,banheiros,andar,vagas
+# Nota: 5 usuários com 2 anúncios cada (total: 10 anúncios)
+
+# USUÁRIO 1: Jackson Douglas (2 anúncios)
+Jackson Douglas,jayradpro@gmail.com,83988881111,Casa em João Pessoa,350000,Casa moderna com 3 quartos,VENDA,Casa,Rua das Flores,123,João Pessoa,PB,150.0,3,2,0,2
+Jackson Douglas,jayradpro@gmail.com,83988881111,Lote na Praia,250000,Terreno ideal para construção,VENDA,Terreno,Avenida Litoral,456,Cabedelo,PB,500.0,0,0,0,0
+
+# USUÁRIO 2: Maria Santos (2 anúncios)
+Maria Santos,maria@email.com,83988882222,Apartamento em Campina Grande,180000,Apto confortável no centro,VENDA,Apartamento,Avenida Getúlio Vargas,789,Campina Grande,PB,85.0,2,1,5,1
+Maria Santos,maria@email.com,83988882222,Aluguel de Sala Comercial,2500,Espaço comercial bem localizado,ALUGUEL,SalaComercial,Rua Comércio,321,Campina Grande,PB,120.0,0,1,2,2
+
+# USUÁRIO 3: Pedro Oliveira (2 anúncios)
+Pedro Oliveira,pedro@email.com,83988883333,Casa com Piscina,450000,Casa de luxo com piscina,VENDA,Casa,Rua Privilégio,654,João Pessoa,PB,200.0,4,3,0,3
+Pedro Oliveira,pedro@email.com,83988883333,Temporada Praia,500,Aluguel por temporada,TEMPORADA,Casa,Praia Bela,987,Guarabira,PB,180.0,3,2,0,1
