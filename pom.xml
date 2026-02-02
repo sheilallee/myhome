@@ -50,6 +50,16 @@
                 </configuration>
             </plugin>
 
+            <!-- Exec Plugin para executar aplicação -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.0.0</version>
+                <configuration>
+                    <mainClass>com.myhome.Main</mainClass>
+                </configuration>
+            </plugin>
+
             <!-- Shade Plugin para criar JAR executável -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

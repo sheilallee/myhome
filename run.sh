@@ -1,8 +1,7 @@
 #!/bin/bash
 
-# Script de execução do MyHome
-# Compila com Maven (copia resources automaticamente)
-# e executa direto sem problemas de Scanner
+# Script de execução do MyHome (Multiplataforma via Maven Wrapper)
+# Compila com Maven Wrapper e executa a aplicação
 
 set -e
 
@@ -11,15 +10,19 @@ echo "║              MyHome - Aplicação                        ║"
 echo "╚════════════════════════════════════════════════════════╝"
 echo ""
 
-# Verificar se Maven está instalado
-if ! command -v mvn &> /dev/null; then
-    echo "❌ Maven não encontrado! Instale com: sudo apt install maven"
+# Verificar se Maven Wrapper existe
+if [ ! -f "./mvnw" ]; then
+    echo "❌ Maven Wrapper não encontrado!"
+    echo "   Execute: mvn wrapper:wrapper"
     exit 1
 fi
 
-# Compilar com Maven
-echo "🔨 Compilando com Maven..."
-mvn clean compile -q
+# Dar permissão de execução ao wrapper (caso necessário)
+chmod +x ./mvnw
+
+# Compilar com Maven Wrapper
+echo "🔨 Compilando com Maven Wrapper..."
+./mvnw clean compile -q
 
 if [ $? -eq 0 ]; then
     echo "✅ Compilação sucedida!"
@@ -28,8 +31,8 @@ if [ $? -eq 0 ]; then
     echo "════════════════════════════════════════════════════════"
     echo ""
     
-    # Executar direto (evita problemas do Maven com Scanner)
-    java -cp target/classes com.myhome.Main
+    # Usar maven wrapper exec para incluir todas as dependências no classpath
+    ./mvnw exec:java -Dexec.mainClass="com.myhome.Main" -q
 else
     echo "❌ Erro na compilação!"
     exit 1
