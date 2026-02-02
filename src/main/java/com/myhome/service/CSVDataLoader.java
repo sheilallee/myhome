@@ -23,7 +23,7 @@ import java.util.*;
  */
 public class CSVDataLoader {
     
-    private static final String DATA_DIR = "data";
+    private static final String DATA_DIR = "seed";
     private static final String ANUNCIOS_CSV = DATA_DIR + "/anuncios_seed.csv";
     
     /**

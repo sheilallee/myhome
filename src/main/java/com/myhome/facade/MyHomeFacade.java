@@ -388,10 +388,7 @@ public class MyHomeFacade {
         
         while (!voltar) {
             menuService.exibirCabecalho("⚙️  CONFIGURAÇÕES");
-            System.out.println("\n  [1] Configurar canal de notificação");
-            System.out.println("  [2] Editar perfil");
-            System.out.println("  [3] Informações do sistema");
-            System.out.println("  [0] Voltar\n");
+            menuService.exibirMenuConfiguracoes();
             
             try {
                 int opcao = Integer.parseInt(scanner.nextLine().trim());
@@ -455,10 +452,7 @@ public class MyHomeFacade {
         
         while (!loginValido) {
             menuService.exibirCabecalho("LOGIN / CADASTRO");
-            System.out.println("\n🔐 Selecione uma opção:");
-            System.out.println("\n  [1] Entrar com conta existente");
-            System.out.println("  [2] Criar nova conta");
-            System.out.println("  [0] Sair\n");
+            menuService.exibirMenuLogin();
             
             int opcao = menuService.lerOpcao("Escolha: ");
             
@@ -506,13 +500,7 @@ public class MyHomeFacade {
         }
         
         menuService.exibirCabecalho("SELECIONE SUA CONTA");
-        System.out.println();
-        
-        for (int i = 0; i < usuariosRegistrados.size(); i++) {
-            Usuario u = usuariosRegistrados.get(i);
-            System.out.println("  [" + (i + 1) + "] " + u.getNome() + " (" + u.getEmail() + ")");
-        }
-        System.out.println("  [0] Cancelar\n");
+        menuService.exibirListaUsuarios(usuariosRegistrados);
         
         int escolha = menuService.lerOpcao("Escolha: ");
         
@@ -528,8 +516,9 @@ public class MyHomeFacade {
      */
     private Usuario criarNovoUsuario(Scanner scanner) {
         menuService.exibirCabecalho("CRIAR NOVA CONTA");
+        menuService.exibirFormularioCadastro();
         
-        String nome = menuService.lerTexto("\n👤 Nome completo: ");
+        String nome = menuService.lerTexto("👤 Nome completo: ");
         
         String email;
         while (true) {
@@ -570,14 +559,11 @@ public class MyHomeFacade {
      */
     private void editarPerfilUsuario(Scanner scanner) {
         menuService.exibirCabecalho("✏️  EDITAR PERFIL");
-        
-        System.out.println("\n👤 Usuário atual: " + usuarioAtual.getNome());
-        System.out.println("📧 Email: " + usuarioAtual.getEmail());
-        System.out.println("📱 Telefone: " + usuarioAtual.getTelefone());
-        
-        System.out.println("\n[1] Alterar email");
-        System.out.println("[2] Alterar telefone");
-        System.out.println("[0] Cancelar\n");
+        menuService.exibirPerfilUsuario(
+            usuarioAtual.getNome(),
+            usuarioAtual.getEmail(),
+            usuarioAtual.getTelefone()
+        );
         
         int opcao = menuService.lerOpcao("Escolha: ");
         
