@@ -8,11 +8,7 @@ import java.util.Set;
 import com.myhome.controller.UIController;
 import com.myhome.decorator.BuscaFiltro;
 import com.myhome.model.Anuncio;
-import com.myhome.model.Apartamento;
-import com.myhome.model.Casa;
 import com.myhome.model.Imovel;
-import com.myhome.model.SalaComercial;
-import com.myhome.model.Terreno;
 import com.myhome.model.Usuario;
 import com.myhome.prototype.PrototypeRegistry;
 import com.myhome.service.AnuncioService;
@@ -29,9 +25,7 @@ import com.myhome.service.SMSService;
 import com.myhome.service.UsuarioService;
 import com.myhome.service.ValidadorService;
 import com.myhome.service.WhatsAppService;
-import com.myhome.singleton.ConfigurationManager;
 import com.myhome.strategy.EmailNotificacao;
-import com.myhome.strategy.NotificationManager;
 
 // RF08 - Facade: orquestra todos os subsistemas do MyHome
 public class MyHomeFacade {
@@ -104,7 +98,6 @@ public class MyHomeFacade {
             
             try {
                 int opcao = uiController.lerOpcao("Escolha uma opção: ");
-                System.out.println();
                 
                 switch (opcao) {
                     case 1:
@@ -179,11 +172,6 @@ public class MyHomeFacade {
         }
     }
 
-    private void pausar(Scanner scanner) {
-        System.out.println("\n⏸️  Pressione ENTER para continuar...");
-        scanner.nextLine();
-    }
-    
     // ================================================================
     // MÉTODOS INTERATIVOS
     // ================================================================
@@ -225,29 +213,24 @@ public class MyHomeFacade {
      * Fluxo: ImovelService → AnuncioService → PersistenciaService
      */
     public void criarAnuncioInterativo(Scanner scanner) {
-        System.out.println("╔════════════════════════════════════════╗");
-        System.out.println("║       CRIAR NOVO ANÚNCIO               ║");
-        System.out.println("╚════════════════════════════════════════╝\n");
+        menuService.exibirCabecalhoCriarAnuncioInterativo();
         
         try {
             // PASSO 1: Criar Imóvel (delegado a ImovelService)
             Imovel imovel = imovelService.criarImovelInterativo(scanner);
             
             if (imovel == null) {
-                System.out.println("\n❌ Criação de imóvel cancelada.\n");
+                menuService.exibirCancelamentoCriacaoImovel();
                 return;
             }
             
-            System.out.println("\n✅ Imóvel criado com sucesso!");
-            System.out.println("   Tipo: " + imovel.getTipo());
-            System.out.println("   Endereço: " + imovel.getEndereco());
-            System.out.println("   Área: " + imovel.getArea() + "m²");
+            menuService.exibirSucessoCriacaoImovelInterativo(imovel.getTipo(), imovel.getEndereco().toString(), imovel.getArea());
             
             // PASSO 2: Criar Anúncio (delegado a AnuncioService)
             Anuncio anuncio = anuncioService.criarAnuncioInterativo(scanner, imovel);
             
             if (anuncio == null) {
-                System.out.println("\n❌ Criação de anúncio cancelada.\n");
+                menuService.exibirCancelamentoCriacaoAnuncio();
                 return;
             }
             
@@ -262,7 +245,7 @@ public class MyHomeFacade {
             exibirResultadoAnuncio(anuncio);
             
         } catch (Exception e) {
-            System.out.println("\n❌ Erro ao criar anúncio: " + e.getMessage() + "\n");
+            menuService.exibirErroCriacaoAnuncio(e.getMessage());
         }
     }
     
@@ -278,29 +261,26 @@ public class MyHomeFacade {
      * - Valida antes de prosseguir com Factory
      */
     public void criarAnuncioDePrototipo(Scanner scanner) {
-        System.out.println("╔════════════════════════════════════════╗");
-        System.out.println("║   CRIAR ANÚNCIO DE PROTÓTIPO          ║");
-        System.out.println("║   (Padrão Prototype - RF02)            ║");
-        System.out.println("╚════════════════════════════════════════╝\n");
+        menuService.exibirCabecalhoCriarAnuncioPrototipo();
         
         try {
             // PASSO 1: Listar protótipos disponíveis
             PrototypeRegistry registro = PrototypeRegistry.getInstance();
             Set<String> chaves = registro.listarChaves();
             
-            System.out.println("🏘️  Protótipos Disponíveis:\n");
+            menuService.exibirCabecalhoPrototiposDisponiveis();
             List<String> chavesLista = new ArrayList<>(chaves);
             for (int i = 0; i < chavesLista.size(); i++) {
                 String chave = chavesLista.get(i);
                 String descricao = registro.obterDescricao(chave);
-                System.out.println("  [" + (i + 1) + "] " + descricao);
+                menuService.exibirItemPrototipoLista(i + 1, descricao);
             }
             
-            System.out.print("\n➤ Escolha o protótipo: ");
+            menuService.exibirPromptSelecaoPrototipo();
             int opcao = Integer.parseInt(scanner.nextLine().trim());
             
             if (opcao < 1 || opcao > chavesLista.size()) {
-                System.out.println("\n❌ Opção inválida!");
+                menuService.exibirOpcaoInvalida();
                 return;
             }
             
@@ -310,34 +290,29 @@ public class MyHomeFacade {
             Imovel imovel = registro.obterPrototipo(chavePrototipo);
             
             if (imovel == null) {
-                System.out.println("\n❌ Protótipo não encontrado!");
+                menuService.exibirErroPrototipoNaoEncontrado();
                 return;
             }
             
-            System.out.println("\n┌────────────────────────────────────────┐");
-            System.out.println("│  PASSO 1: IMÓVEL CLONADO COM SUCESSO   │");
-            System.out.println("└────────────────────────────────────────┘");
-            System.out.println("\n✅ Imóvel clonado: " + registro.gerarDescricaoPrototipo(imovel));
-            System.out.println("   Hash do clone: " + imovel.hashCode());
-            System.out.println("   (objeto independente pronto para customização)\n");
+            menuService.exibirCabecalhoImovelClonado();
+            menuService.exibirDetalhesClonagemImovel(registro.gerarDescricaoPrototipo(imovel), imovel.hashCode());
             
             // PASSO 3: CUSTOMIZAR o imóvel clonado
             imovelService.customizarImovelClonado(scanner, imovel);
             
             // PASSO 4: VALIDAR antes de prosseguir
             if (!imovel.validar()) {
-                System.out.println("\n❌ Imóvel inválido após customização!");
-                System.out.println("   Verifique os dados informados.\n");
+                menuService.exibirErroValidacaoImovel();
                 return;
             }
             
-            System.out.println("\n✅ Imóvel validado com sucesso!");
+            menuService.exibirSucessoValidacaoImovel();
             
             // PASSO 5: Criar Anúncio (delegado a AnuncioService)
             Anuncio anuncio = anuncioService.criarAnuncioInterativo(scanner, imovel);
             
             if (anuncio == null) {
-                System.out.println("\n❌ Criação de anúncio cancelada.\n");
+                menuService.exibirCancelamentoCriacaoAnuncio();
                 return;
             }
             
@@ -352,115 +327,46 @@ public class MyHomeFacade {
             exibirResultadoAnuncio(anuncio);
             
         } catch (NumberFormatException e) {
-            System.out.println("\n❌ Entrada inválida! Digite um número.");
+            menuService.exibirErroEntradaInvalidaNumero();
         } catch (Exception e) {
-            System.out.println("\n❌ Erro ao criar anúncio de protótipo: " + e.getMessage() + "\n");
+            menuService.exibirErroCriacaoAnuncio("(Protótipo) " + e.getMessage());
         }
     }
     
     /**
      * Exibe resultado final do anúncio criado
+     * Delegado ao MenuService para desacoplamento
      */
     private void exibirResultadoAnuncio(Anuncio anuncio) {
-        System.out.println("\n╔════════════════════════════════════════╗");
-        System.out.println("║     ✅ ANÚNCIO CRIADO COM SUCESSO!     ║");
-        System.out.println("╚════════════════════════════════════════╝");
-        
         Imovel imovel = anuncio.getImovel();
         Usuario anunciante = anuncio.getAnunciante();
         
-        System.out.println("\n📋 ANÚNCIO #" + contadorAnuncios);
-        System.out.println("─".repeat(40));
-        System.out.println("🏷️  Título: " + anuncio.getTitulo());
-        System.out.println("💰 Preço: R$ " + String.format("%,.2f", anuncio.getPreco()));
-        System.out.println("📄 Descrição: " + anuncio.getDescricao());
-        
-        System.out.println("\n🏘️  IMÓVEL:");
-        System.out.println("   Tipo: " + imovel.getTipo());
-        System.out.println("   Endereço: " + imovel.getEndereco());
-        System.out.println("   Área: " + imovel.getArea() + "m²");
-        
-        System.out.println("\n👤 ANUNCIANTE:");
-        System.out.println("   Nome: " + anunciante.getNome());
-        System.out.println("   Email: " + anunciante.getEmail());
-        System.out.println("   Telefone: " + anunciante.getTelefone());
-        
-        System.out.println("\n💡 Status: RASCUNHO (pronto para publicação)");
-        System.out.println("═".repeat(40) + "\n");
+        menuService.exibirResultadoAnuncioCriadoCompleto(
+            contadorAnuncios,
+            anuncio.getTitulo(),
+            anuncio.getPreco(),
+            anuncio.getDescricao(),
+            imovel.getTipo(),
+            imovel.getEndereco().toString(),
+            imovel.getArea(),
+            anunciante.getNome(),
+            anunciante.getEmail(),
+            anunciante.getTelefone()
+        );
     }
     
     /**
      * RF01 - Exibir meus anúncios criados na sessão
      */
     public void exibirMeusAnuncios() {
-        System.out.println("\n+============================================+");
-        System.out.println("|           MEUS ANUNCIOS                    |");
-        System.out.println("+============================================+\n");
+        menuService.exibirCabecalhoMeusAnuncios();
         
         if (meusAnuncios.isEmpty()) {
-            System.out.println("  >> Nenhum anuncio criado ainda.");
-            System.out.println("  >> Use a opcao 1 para criar seu primeiro anuncio!\n");
+            menuService.exibirNenhumAnuncioMeusList();
             return;
         }
         
-        System.out.println("  >> Total de anuncios: " + meusAnuncios.size() + "\n");
-        
-        for (int i = 0; i < meusAnuncios.size(); i++) {
-            Anuncio anuncio = meusAnuncios.get(i);
-            Imovel imovel = anuncio.getImovel();
-            Usuario anunciante = anuncio.getAnunciante();
-            
-            System.out.println("+--------------------------------------------+");
-            System.out.println("|  ANUNCIO #" + (i + 1) + "                                 |");
-            System.out.println("+--------------------------------------------+");
-            System.out.println("  Titulo.....: " + anuncio.getTitulo());
-            System.out.println("  Preco......: R$ " + String.format("%,.2f", anuncio.getPreco()));
-            System.out.println("  Descricao..: " + anuncio.getDescricao());
-            System.out.println();
-            System.out.println("  [IMOVEL]");
-            System.out.println("  Tipo.......: " + imovel.getTipo().toUpperCase());
-            System.out.println("  Area.......: " + imovel.getArea() + " m2");
-            System.out.println("  Endereco...: " + imovel.getEndereco());
-            
-            // Exibe detalhes específicos do tipo de imóvel
-            if (imovel instanceof Casa) {
-                Casa casa = (Casa) imovel;
-                System.out.println("  Quartos....: " + casa.getQuartos());
-                System.out.println("  Banheiros..: " + casa.getBanheiros());
-                System.out.println("  Quintal....: " + (casa.isTemQuintal() ? "Sim" : "Nao"));
-                System.out.println("  Garagem....: " + (casa.isTemGaragem() ? "Sim" : "Nao"));
-            } else if (imovel instanceof Apartamento) {
-                Apartamento apt = (Apartamento) imovel;
-                System.out.println("  Quartos....: " + apt.getQuartos());
-                System.out.println("  Banheiros..: " + apt.getBanheiros());
-                System.out.println("  Andar......: " + apt.getAndar());
-                System.out.println("  Vagas......: " + apt.getVagas());
-                System.out.println("  Elevador...: " + (apt.isTemElevador() ? "Sim" : "Nao"));
-            } else if (imovel instanceof SalaComercial) {
-                SalaComercial sala = (SalaComercial) imovel;
-                System.out.println("  Andar......: " + sala.getAndar());
-                System.out.println("  Banheiro...: " + (sala.isTemBanheiro() ? "Sim" : "Nao"));
-                System.out.println("  Vagas......: " + sala.getVagasEstacionamento());
-                System.out.println("  Capacidade.: " + sala.getCapacidadePessoas() + " pessoas");
-            } else if (imovel instanceof Terreno) {
-                Terreno terreno = (Terreno) imovel;
-                if (terreno.getZoneamento() != null) {
-                    System.out.println("  Zoneamento.: " + terreno.getZoneamento());
-                }
-                if (terreno.getTopografia() != null) {
-                    System.out.println("  Topografia.: " + terreno.getTopografia());
-                }
-            }
-            
-            System.out.println();
-            System.out.println();
-            System.out.println("  [ANUNCIANTE]");
-            System.out.println("  Nome.......: " + anunciante.getNome());
-            System.out.println("  Email......: " + anunciante.getEmail());
-            System.out.println("  Telefone...: " + anunciante.getTelefone());
-            System.out.println("  Estado......: " + anuncio.getState().getNome().toUpperCase());
-            System.out.println("+--------------------------------------------+\n");
-        }
+        menuService.exibirListaAnunciosCompleta(meusAnuncios);
     }
     
     /**
@@ -468,58 +374,51 @@ public class MyHomeFacade {
      * State Pattern + Chain of Responsibility + Observer
      */
     private void gerenciarMeusAnuncios(Scanner scanner) {
-        while (true) {
-            System.out.println("\n╔════════════════════════════════════════╗");
-            System.out.println("║       GERENCIAR MEUS ANÚNCIOS         ║");
-            System.out.println("╚════════════════════════════════════════╝\n");
+        boolean voltar = false;
+        
+        while (!voltar) {
+            menuService.exibirCabecalhoGerenciarAnunciosMenu();
             
             if (meusAnuncios.isEmpty()) {
-                System.out.println("📭 Nenhum anúncio criado ainda.");
-                System.out.println("   Use a opção 1 do menu principal para criar seu primeiro anúncio!\n");
+                menuService.exibirNenhumAnuncio();
                 return;
             }
             
             // Listar anúncios com números
-            System.out.println("📋 Total de anúncios: " + meusAnuncios.size() + "\n");
-            
-            for (int i = 0; i < meusAnuncios.size(); i++) {
-                Anuncio anuncio = meusAnuncios.get(i);
-                Imovel imovel = anuncio.getImovel();
-                System.out.println("┌────────────────────────────────────────┐");
-                System.out.println("│ [" + (i + 1) + "] " + anuncio.getTitulo());
-                System.out.println("├────────────────────────────────────────┤");
-                System.out.println("│ Preço: R$ " + String.format("%,.2f", anuncio.getPreco()));
-                //adicionar informações do imóvel: tipo, cidade/estado
-                System.out.println("│ Tipo: " + imovel.getTipo());
-                System.out.println("│ Local: " + imovel.getEndereco().getCidade() + " - " + imovel.getEndereco().getEstado());
-                System.out.println("│ Estado: " + anuncio.getState().getNome().toUpperCase());
-                System.out.println("└────────────────────────────────────────┘");
-            }
-            
-            System.out.println("\n[0] Voltar ao menu principal");
-            System.out.print("\n➤ Selecione um anúncio (número): ");
+            menuService.exibirListaAnunciosParaSelecao(meusAnuncios);
+            menuService.exibirPromptSelecaoAnuncioGerenciar();
             
             try {
                 int escolha = Integer.parseInt(scanner.nextLine().trim());
-                
-                if (escolha == 0) {
-                    return;
-                }
-                
-                if (escolha < 1 || escolha > meusAnuncios.size()) {
-                    System.out.println("\n❌ Opção inválida!");
-                    pausar(scanner);
-                    continue;
-                }
-                
-                Anuncio anuncioSelecionado = meusAnuncios.get(escolha - 1);
-                gerenciarAnuncioEspecifico(scanner, anuncioSelecionado);
+                voltar = processarSelecaoAnuncio(scanner, escolha);
                 
             } catch (NumberFormatException e) {
-                System.out.println("\n❌ Digite um número válido!");
-                pausar(scanner);
+                menuService.exibirNumeroInvalido();
+                menuService.pausar();
             }
         }
+    }
+    
+    /**
+     * Processa a seleção de um anúncio feita pelo usuário.
+     * Reduz o tamanho e acoplamento do método gerenciarMeusAnuncios().
+     * 
+     * @return true se deve voltar ao menu anterior, false caso contrário
+     */
+    private boolean processarSelecaoAnuncio(Scanner scanner, int escolha) {
+        if (escolha == 0) {
+            return true; // Voltar ao menu principal
+        }
+        
+        if (escolha < 1 || escolha > meusAnuncios.size()) {
+            menuService.exibirOpcaoInvalida();
+            menuService.pausar();
+            return false; // Continuar no loop
+        }
+        
+        Anuncio anuncioSelecionado = meusAnuncios.get(escolha - 1);
+        gerenciarAnuncioEspecifico(scanner, anuncioSelecionado);
+        return false; // Continuar no loop
     }
     
     /**
@@ -541,14 +440,7 @@ public class MyHomeFacade {
      * - EmailNotificacao: envia por email
      * - SMSNotificacao: envia por SMS
      * - WhatsAppNotificacao: envia por WhatsApp
-     */
-    private void notificarUsuario(String mensagem) {
-        if (usuarioAtual != null && usuarioAtual.getCanalNotificacao() != null) {
-            NotificationManager manager = new NotificationManager();
-            manager.enviarNotificacao(usuarioAtual, mensagem);
-        }
-    }
-    
+     */    
     private void anexarObserversAosAnuncios() {
         // Delegado a AnuncioService
         anuncioService.anexarObserversEmLote(meusAnuncios);
@@ -578,21 +470,10 @@ public class MyHomeFacade {
         boolean voltar = false;
         
         while (!voltar) {
-            System.out.println("╔════════════════════════════════════════╗");
-            System.out.println("║         CONFIGURAÇÕES DO SISTEMA       ║");
-            System.out.println("╚════════════════════════════════════════╝\n");
-            
-            ConfigurationManager config = ConfigurationManager.getInstance();
-            
-            System.out.println("📋 Configurações Disponíveis:");
-            System.out.println("─".repeat(40));
-            System.out.println("[1] Configurar Canal de Notificação (RF05)");
-            System.out.println("[2] Informações do Sistema (RF07)");
-            System.out.println("[0] Voltar");
-            System.out.println("─".repeat(40));
+            menuService.exibirCabecalhoConfiguracoes();
+            menuService.exibirOpcoesCofiguracoes();
             
             try {
-                System.out.print("Escolha uma opção: ");
                 int opcao = Integer.parseInt(scanner.nextLine().trim());
                 
                 switch (opcao) {
@@ -606,14 +487,14 @@ public class MyHomeFacade {
                         voltar = true;
                         break;
                     default:
-                        System.out.println("❌ Opção inválida!");
+                        menuService.exibirOpcaoInvalida();
                 }
                 
                 if (opcao != 0) {
-                    pausar(scanner);
+                    menuService.pausar();
                 }
             } catch (NumberFormatException e) {
-                System.out.println("❌ Opção inválida! Digite um número.");
+                menuService.exibirErro("Opção inválida! Digite um número.");
             }
         }
     }

@@ -87,7 +87,7 @@ public class AnuncioManagementService {
                 if (sucesso) {
                     // Salvar mudanças após transição bem-sucedida
                     persistenciaService.salvarAnuncios(meusAnuncios);
-                    System.out.println("\n✅ Ação executada com sucesso!");
+                    System.out.println("\nAlteração no anúncio registrada com sucesso!");
                     pausar(scanner);
                 } else {
                     pausar(scanner);
@@ -188,7 +188,6 @@ public class AnuncioManagementService {
             System.out.println("✅ Aprovando anúncio...\n");
             System.out.println("Executando Chain of Responsibility:");
             facade.aprovar(anuncio);
-            System.out.println("\n✅ Anúncio movido para ATIVO (todas as validações passaram)");
             System.out.println("   📝 Observer registrando mudança em logs/sistema.log...");
             return true;
         } else if (opcao == 2) {
