@@ -30,7 +30,6 @@ import com.myhome.strategy.EmailNotificacao;
 // RF08 - Facade: orquestra todos os subsistemas do MyHome
 public class MyHomeFacade {
     
-    // Subsistemas (injeção de dependência)
     private final MenuService menuService;
     private final UIController uiController;
     private final ImovelService imovelService;
@@ -41,14 +40,11 @@ public class MyHomeFacade {
     private final SystemInfoService systemInfoService;
     private final PatternsService patternsService;
 
-    // Dados da aplicação
     private List<Anuncio> meusAnuncios;
     private int contadorAnuncios;
-    private Usuario usuarioAtual; // RF05 - Usuario com canal de notificação configurável
-    
-    // Inicializa todos os subsistemas
+    // RF05 - Strategy: Usuário com canal de notificação configurável
+    private Usuario usuarioAtual;
     public MyHomeFacade() {
-        // Criar services na ordem correta de dependências
         this.menuService = new MenuService();
         this.validadorService = new ValidadorService();
         this.uiController = new UIController(menuService, validadorService);
@@ -62,31 +58,19 @@ public class MyHomeFacade {
         this.meusAnuncios = new ArrayList<>();
         this.contadorAnuncios = 0;
         
-        // RF05 - Criar usuário padrão com canal de notificação padrão
+        // RF05 - Strategy: Criar usuário com canal de notificação padrão
         this.usuarioAtual = new Usuario("User", "jayradpro@gmail.com", "(83) 8888-8888");
         this.usuarioAtual.setCanalNotificacao(new EmailNotificacao(new EmailService()));
     }
     
-    /**
-     * Executa o sistema MyHome de forma interativa.
-     * 
-     * Menu principal com opções:
-     * 1. Criar anúncio interativo (RF01)
-     * 2. Buscar imóveis (RF06)
-     * 3. Meus anúncios (RF04)
-     * 4. Configurações (RF07)
-     * 5. Demonstrar padrões GoF
-     * 0. Sair
-     */
+    // RF04 - Observer: Monitorar estado dos anúncios
     public void executar() {
         Scanner scanner = uiController.getScanner();
         boolean continuar = true;
         
-        // Carrega anúncios salvos
         meusAnuncios = persistenciaService.carregarAnuncios();
         contadorAnuncios = meusAnuncios.size();
         
-        // Anexar observers aos anúncios carregados (RF04 - Observer Pattern)
         if (contadorAnuncios > 0) {
             anexarObserversAosAnuncios();
             uiController.exibirInfo(contadorAnuncios + " anúncio(s) carregado(s) do arquivo!");
@@ -139,9 +123,7 @@ public class MyHomeFacade {
         uiController.fechar();
     }
     
-    /**
-     * Menu para criar anúncio: Prototype ou Builder
-     */
+    // RF03 - Factory Method: Criar diferentes tipos de anúncio
     private void menuCriarAnuncio(Scanner scanner) {
         boolean voltar = false;
         
@@ -172,16 +154,8 @@ public class MyHomeFacade {
         }
     }
 
-    // ================================================================
-    // MÉTODOS INTERATIVOS
-    // ================================================================
-    
-    /**
-     * RF06 - DECORATOR PATTERN: Busca avançada com filtros dinâmicos
-     * Delegada a SearchFilterService para orquestração
-     */
+    // RF06 - Decorator: Busca com filtros dinâmicos
     public void executarBusca(UIController uiController) {
-        // Coletar filtros via UIController
         String[] filtros = uiController.coletarFiltrosBusca();
         String precoMin = filtros[0];
         String precoMax = filtros[1];
@@ -189,34 +163,23 @@ public class MyHomeFacade {
         String estado = filtros[3];
         String tipo = filtros[4];
         
-        // Usar SearchFilterService para aplicar filtros (Decorator Pattern)
         SearchFilterService searchService = new SearchFilterService(uiController);
         BuscaFiltro busca = searchService.aplicarFiltros(meusAnuncios, precoMin, precoMax, cidade, estado, tipo);
-        
-        // Executar busca
         List<Anuncio> resultados = searchService.executar(busca);
-        
-        // Exibir resultados
         uiController.exibirResultadoBusca(resultados);
     }
     
-    /**
-     * RF01 - Exibir meus anúncios criados na sessão
-     */
+    // RF01 - Factory: Visualizar anúncios
     public void exibirMeusAnuncios(UIController uiController) {
         Scanner scanner = uiController.getScanner();
         gerenciarMeusAnuncios(scanner);
     }
     
-    /**
-     * RF01 - Criar anúncio de forma interativa
-     * Fluxo: ImovelService → AnuncioService → PersistenciaService
-     */
+    // RF01 - Builder: Criar imóvel interativamente
     public void criarAnuncioInterativo(Scanner scanner) {
         menuService.exibirCabecalhoCriarAnuncioInterativo();
         
         try {
-            // PASSO 1: Criar Imóvel (delegado a ImovelService)
             Imovel imovel = imovelService.criarImovelInterativo(scanner);
             
             if (imovel == null) {
@@ -226,7 +189,6 @@ public class MyHomeFacade {
             
             menuService.exibirSucessoCriacaoImovelInterativo(imovel.getTipo(), imovel.getEndereco().toString(), imovel.getArea());
             
-            // PASSO 2: Criar Anúncio (delegado a AnuncioService)
             Anuncio anuncio = anuncioService.criarAnuncioInterativo(scanner, imovel);
             
             if (anuncio == null) {
@@ -234,14 +196,9 @@ public class MyHomeFacade {
                 return;
             }
             
-            // Adicionar à lista de anúncios
             meusAnuncios.add(anuncio);
             contadorAnuncios++;
-            
-            // Salvar em arquivo JSON
             persistenciaService.salvarAnuncios(meusAnuncios);
-            
-            // Exibir resultado final
             exibirResultadoAnuncio(anuncio);
             
         } catch (Exception e) {
@@ -249,22 +206,11 @@ public class MyHomeFacade {
         }
     }
     
-    /**
-     * RF02 - CRIAR ANÚNCIO A PARTIR DE PROTÓTIPO
-     * 
-     * Fluxo: PrototypeRegistry → Clonar → Customizar → Factory Method
-     * 
-     * PADRÃO PROTOTYPE:
-     * - Obtém protótipo pré-configurado do PrototypeRegistry
-     * - Clona usando método clonar() da interface ImovelPrototype
-     * - Permite customização do endereço (obrigatório)
-     * - Valida antes de prosseguir com Factory
-     */
+    // RF02 - Prototype: Clonar imóvel pré-configurado
     public void criarAnuncioDePrototipo(Scanner scanner) {
         menuService.exibirCabecalhoCriarAnuncioPrototipo();
         
         try {
-            // PASSO 1: Listar protótipos disponíveis
             PrototypeRegistry registro = PrototypeRegistry.getInstance();
             Set<String> chaves = registro.listarChaves();
             
@@ -285,8 +231,6 @@ public class MyHomeFacade {
             }
             
             String chavePrototipo = chavesLista.get(opcao - 1);
-            
-            // PASSO 2: CLONAR o protótipo (Prototype Pattern)
             Imovel imovel = registro.obterPrototipo(chavePrototipo);
             
             if (imovel == null) {
@@ -297,10 +241,8 @@ public class MyHomeFacade {
             menuService.exibirCabecalhoImovelClonado();
             menuService.exibirDetalhesClonagemImovel(registro.gerarDescricaoPrototipo(imovel), imovel.hashCode());
             
-            // PASSO 3: CUSTOMIZAR o imóvel clonado
             imovelService.customizarImovelClonado(scanner, imovel);
             
-            // PASSO 4: VALIDAR antes de prosseguir
             if (!imovel.validar()) {
                 menuService.exibirErroValidacaoImovel();
                 return;
@@ -308,7 +250,6 @@ public class MyHomeFacade {
             
             menuService.exibirSucessoValidacaoImovel();
             
-            // PASSO 5: Criar Anúncio (delegado a AnuncioService)
             Anuncio anuncio = anuncioService.criarAnuncioInterativo(scanner, imovel);
             
             if (anuncio == null) {
@@ -316,14 +257,9 @@ public class MyHomeFacade {
                 return;
             }
             
-            // Adicionar à lista de anúncios
             meusAnuncios.add(anuncio);
             contadorAnuncios++;
-            
-            // Salvar em arquivo JSON
             persistenciaService.salvarAnuncios(meusAnuncios);
-            
-            // Exibir resultado final
             exibirResultadoAnuncio(anuncio);
             
         } catch (NumberFormatException e) {
@@ -333,10 +269,6 @@ public class MyHomeFacade {
         }
     }
     
-    /**
-     * Exibe resultado final do anúncio criado
-     * Delegado ao MenuService para desacoplamento
-     */
     private void exibirResultadoAnuncio(Anuncio anuncio) {
         Imovel imovel = anuncio.getImovel();
         Usuario anunciante = anuncio.getAnunciante();
@@ -355,9 +287,6 @@ public class MyHomeFacade {
         );
     }
     
-    /**
-     * RF01 - Exibir meus anúncios criados na sessão
-     */
     public void exibirMeusAnuncios() {
         menuService.exibirCabecalhoMeusAnuncios();
         
@@ -369,10 +298,7 @@ public class MyHomeFacade {
         menuService.exibirListaAnunciosCompleta(meusAnuncios);
     }
     
-    /**
-     * RF04 - Gerenciar anúncios com transições de estado
-     * State Pattern + Chain of Responsibility + Observer
-     */
+    // RF04 - State: Gerenciar estado dos anúncios com transições
     private void gerenciarMeusAnuncios(Scanner scanner) {
         boolean voltar = false;
         
@@ -384,7 +310,6 @@ public class MyHomeFacade {
                 return;
             }
             
-            // Listar anúncios com números
             menuService.exibirListaAnunciosParaSelecao(meusAnuncios);
             menuService.exibirPromptSelecaoAnuncioGerenciar();
             
@@ -399,60 +324,27 @@ public class MyHomeFacade {
         }
     }
     
-    /**
-     * Processa a seleção de um anúncio feita pelo usuário.
-     * Reduz o tamanho e acoplamento do método gerenciarMeusAnuncios().
-     * 
-     * @return true se deve voltar ao menu anterior, false caso contrário
-     */
     private boolean processarSelecaoAnuncio(Scanner scanner, int escolha) {
         if (escolha == 0) {
-            return true; // Voltar ao menu principal
+            return true;
         }
         
         if (escolha < 1 || escolha > meusAnuncios.size()) {
             menuService.exibirOpcaoInvalida();
             menuService.pausar();
-            return false; // Continuar no loop
+            return false;
         }
         
         Anuncio anuncioSelecionado = meusAnuncios.get(escolha - 1);
         gerenciarAnuncioEspecifico(scanner, anuncioSelecionado);
-        return false; // Continuar no loop
+        return false;
     }
-    
-    /**
-     * RF04 - Anexa observers aos anúncios carregados do arquivo JSON
-     * 
-     * IMPORTANTE: Anúncios criados em `criarAnuncioInterativo()` já têm observers.
-     * Mas anúncios carregados do arquivo JSON perdem os observers durante
-     * a desserialização, então precisam ser re-anexados aqui.
-     * 
-     * Padrão Observer: Monitora mudanças de estado
-     * - LogObserver: Registra mudanças em arquivo logs/sistema.log
-     * - NotificationObserver: Notifica usuários (quando configurado)
-     */
-    
-    /**
-     * RF05 - STRATEGY: Envia notificação usando o canal configurado do usuário
-     * 
-     * O padrão Strategy permite trocar dinamicamente o algoritmo de notificação:
-     * - EmailNotificacao: envia por email
-     * - SMSNotificacao: envia por SMS
-     * - WhatsAppNotificacao: envia por WhatsApp
-     */    
+    // RF04 - Observer: Re-anexar observers aos anúncios carregados
     private void anexarObserversAosAnuncios() {
-        // Delegado a AnuncioService
         anuncioService.anexarObserversEmLote(meusAnuncios);
     }
     
-    /**
-     * Gerencia um anúncio específico com opções baseadas no estado atual
-     */
-    /**
-     * Gerencia um anúncio específico com opções baseadas no estado atual
-     * Delegado a AnuncioManagementService
-     */
+    // RF04 - State: Gerenciar transições de estado do anúncio
     private void gerenciarAnuncioEspecifico(Scanner scanner, Anuncio anuncio) {
         AnuncioManagementService managementService = new AnuncioManagementService(
             persistenciaService,
@@ -462,9 +354,7 @@ public class MyHomeFacade {
         managementService.gerenciarAnuncioEspecifico(scanner, anuncio);
     }
     
-    /**
-     * RF07 - Exibir configurações (Singleton)
-     */
+    // RF07 - Singleton: Gerenciar configurações do sistema
     public void exibirConfiguracoes() {
         Scanner scanner = new Scanner(System.in);
         boolean voltar = false;
@@ -499,10 +389,7 @@ public class MyHomeFacade {
         }
     }
     
-    /**
-     * RF05 - STRATEGY PATTERN: Configurar canal de notificação
-     * Delegado a NotificationConfigService
-     */
+    // RF05 - Strategy: Configurar canal de notificação dinamicamente
     private void configurarCanalNotificacao(Scanner scanner) {
         NotificationConfigService configService = new NotificationConfigService(
             new EmailService(),
@@ -512,21 +399,12 @@ public class MyHomeFacade {
         configService.configurarCanalNotificacao(scanner, usuarioAtual);
     }
     
-     /**
-     * Testa o canal de notificação configurado
-     */
-    /**
-     * Exibe informações do sistema (RF07)
-     * Delegado a SystemInfoService para desacoplamento
-     */
+    // RF07 - Singleton: Exibir informações do sistema
     private void exibirInformacoesDoSistema() {
         systemInfoService.exibirInformacoes(usuarioAtual);
     }
     
-    /**
-     * Demonstra todos os padrões GoF implementados
-     * Delegado a PatternsService para desacoplamento
-     */
+    // Demonstra todos os padrões GoF implementados
     public void demonstrarPadroesGoF() {
         patternsService.demonstrarTodosPadroes();
     }
